@@ -5,19 +5,23 @@ export const analyzeConflict = async (conflictDescription: string): Promise<Anal
   // Simulate AI processing delay
   await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
   
-  // New ULTIMATE PROMPT structure with USER_QUERY first
-  const prompt = `### USER_QUERY
-${conflictDescription}
----
-### SYSTEM_INSTRUCTIONS
-You are ECHO, an AI Empathy Simulator. Your task is to analyze the USER_QUERY above.
+  // New English-only AI Prompt - simplified for MVP
+  const prompt = `### TASK
+Analyze the following user text, which is in English. Generate a three-part empathetic analysis in English.
 
-1.  **LANGUAGE:** First, detect the language of the USER_QUERY. Your entire response MUST be in that same language. This is the top priority.
-2.  **ANALYSIS:** Analyze the query to understand the conflict.
-3.  **RESPONSE STRUCTURE:** You MUST format your response using these exact Markdown headings: \`### The Other Perspective\`, \`### The Emotional Bridge\`, \`### The Translator for your next discussion\`.
-4.  **CONTENT - The Other Perspective:** Write a first-person ("I") narrative from the other person's point of view. It must be empathetic and insightful.
-5.  **CONTENT - The Emotional Bridge:** Identify the non-obvious shared human value or fear.
-6.  **CONTENT - The Translator:** Give a concrete "Don't say / Instead, try" suggestion.`;
+### USER TEXT TO ANALYZE
+${conflictDescription}
+
+---
+
+### The Other Perspective
+(Write in the first person "I", from the other's point of view. Focus on their underlying emotions, fears, and values.)
+
+### The Emotional Bridge
+(Identify the single, specific core emotion or value that both sides share, even if they express it differently.)
+
+### The Translator for your next discussion
+(Provide a concrete "Don't say / Instead, try" format for de-escalation.)`;
 
   console.log('AI Prompt being sent:', prompt);
   console.log('User input mapped to [USER_INPUT]:', conflictDescription);
