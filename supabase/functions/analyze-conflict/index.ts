@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -313,11 +312,10 @@ Now, provide your analysis using these exact three Markdown headings and nothing
     )
 
   } catch (error) {
-    console.error('Edge function error:', error)
+    console.error('Edge function internal error:', error)
     return new Response(
       JSON.stringify({ 
-        error: 'Failed to analyze conflict',
-        details: error.message 
+        error: `Backend Error: ${error.message}`
       }),
       { 
         status: 500,
