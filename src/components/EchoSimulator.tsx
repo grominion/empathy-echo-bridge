@@ -15,24 +15,36 @@ export interface AnalysisResult {
 }
 
 export const EchoSimulator: React.FC = () => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleAnalyze = async (conflictDescription: string) => {
-    setIsAnalyzing(true);
+    setError(null);
+    setIsLoading(true);
+    
     try {
       const result = await analyzeConflict(conflictDescription);
       navigate('/result', { state: { analysis: result } });
-    } catch (error) {
-      console.error('Analysis failed:', error);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      setError(errorMessage);
+      console.error("A critical error occurred:", e);
     } finally {
-      setIsAnalyzing(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="space-y-8">
-      <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+      <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isLoading} />
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p style={{color: 'red'}} className="text-sm">
+            <strong>Error:</strong> {error}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
