@@ -5,10 +5,11 @@ import { CoachAnalysis } from '../components/CoachAnalysis';
 import { ContinueInput } from '../components/ContinueInput';
 import { StartNewConversationFab } from '../components/StartNewConversationFab';
 import { EditableMessage } from '../components/EditableMessage';
+import { LoadingBubble } from '../components/LoadingBubble';
 import { analyzeConflict, continueCoaching } from '../utils/empathyAnalyzer';
 
 export interface ConversationTurn {
-  type: 'initial_problem' | 'ai_analysis' | 'their_reply';
+  type: 'initial_problem' | 'ai_analysis' | 'their_reply' | 'loading';
   content: string;
   timestamp: Date;
 }
@@ -47,22 +48,31 @@ const Conversation = () => {
         timestamp: new Date()
       };
       
-      setConversationHistory([initialTurn]);
+      // Add loading bubble
+      const loadingTurn: ConversationTurn = {
+        type: 'loading',
+        content: 'Thinking...',
+        timestamp: new Date()
+      };
+      
+      setConversationHistory([initialTurn, loadingTurn]);
       
       const result = await analyzeConflict(conflictDescription);
       
-      // Add the AI analysis to conversation history
+      // Replace loading bubble with AI analysis
       const analysisTurn: ConversationTurn = {
         type: 'ai_analysis',
         content: result.otherPerspective,
         timestamp: new Date()
       };
       
-      setConversationHistory(prev => [...prev, analysisTurn]);
+      setConversationHistory([initialTurn, analysisTurn]);
       
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
+      // Remove loading bubble on error
+      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
       console.error("A critical error occurred:", e);
     } finally {
       setIsLoading(false);
@@ -83,23 +93,35 @@ const Conversation = () => {
         timestamp: new Date()
       };
       
-      const updatedHistory = [...conversationHistory, replyTurn];
+      // Add loading bubble
+      const loadingTurn: ConversationTurn = {
+        type: 'loading',
+        content: 'Thinking...',
+        timestamp: new Date()
+      };
+      
+      const updatedHistory = [...conversationHistory, replyTurn, loadingTurn];
       setConversationHistory(updatedHistory);
       
-      const result = await continueCoaching(updatedHistory);
+      const result = await continueCoaching(updatedHistory.filter(turn => turn.type !== 'loading'));
       
-      // Add the new AI analysis to conversation history
+      // Replace loading bubble with new AI analysis
       const analysisTurn: ConversationTurn = {
         type: 'ai_analysis',
         content: result.otherPerspective,
         timestamp: new Date()
       };
       
-      setConversationHistory(prev => [...prev, analysisTurn]);
+      setConversationHistory(prev => [
+        ...prev.filter(turn => turn.type !== 'loading'),
+        analysisTurn
+      ]);
       
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
+      // Remove loading bubble on error
+      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
       console.error("Error continuing conversation:", e);
     } finally {
       setIsLoading(false);
@@ -113,37 +135,48 @@ const Conversation = () => {
     setIsLoading(true);
     
     try {
-      // Find the last user reply and update it
+      // Find the last user reply and update it - using reverse and findIndex for compatibility
       const updatedHistory = [...conversationHistory];
-      const lastReplyIndex = updatedHistory.findLastIndex(turn => turn.type === 'their_reply');
+      const reversedHistory = [...updatedHistory].reverse();
+      const lastReplyIndexFromEnd = reversedHistory.findIndex(turn => turn.type === 'their_reply');
       
-      if (lastReplyIndex !== -1) {
+      if (lastReplyIndexFromEnd !== -1) {
+        const lastReplyIndex = updatedHistory.length - 1 - lastReplyIndexFromEnd;
+        
         updatedHistory[lastReplyIndex] = {
           ...updatedHistory[lastReplyIndex],
           content: newContent,
           timestamp: new Date()
         };
         
-        // Remove any AI analysis that came after this reply
+        // Remove any AI analysis that came after this reply and add loading bubble
         const historyUpToReply = updatedHistory.slice(0, lastReplyIndex + 1);
-        setConversationHistory(historyUpToReply);
+        const loadingTurn: ConversationTurn = {
+          type: 'loading',
+          content: 'Thinking...',
+          timestamp: new Date()
+        };
+        
+        setConversationHistory([...historyUpToReply, loadingTurn]);
         
         // Get new analysis with updated history
         const result = await continueCoaching(historyUpToReply);
         
-        // Add the new AI analysis
+        // Replace loading bubble with new AI analysis
         const analysisTurn: ConversationTurn = {
           type: 'ai_analysis',
           content: result.otherPerspective,
           timestamp: new Date()
         };
         
-        setConversationHistory(prev => [...prev, analysisTurn]);
+        setConversationHistory([...historyUpToReply, analysisTurn]);
       }
       
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
+      // Remove loading bubble on error
+      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
       console.error("Error editing conversation:", e);
     } finally {
       setIsLoading(false);
@@ -151,8 +184,11 @@ const Conversation = () => {
   };
 
   const isConversationStarted = conversationHistory.length > 0;
+  
   const getLastUserReplyIndex = () => {
-    return conversationHistory.findLastIndex(turn => turn.type === 'their_reply');
+    const reversedHistory = [...conversationHistory].reverse();
+    const lastReplyIndexFromEnd = reversedHistory.findIndex(turn => turn.type === 'their_reply');
+    return lastReplyIndexFromEnd !== -1 ? conversationHistory.length - 1 - lastReplyIndexFromEnd : -1;
   };
 
   return (
@@ -202,6 +238,14 @@ const Conversation = () => {
                       <div className="flex justify-start mb-6">
                         <div className="max-w-3xl">
                           <CoachAnalysis analysis={{ otherPerspective: turn.content }} />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {turn.type === 'loading' && (
+                      <div className="flex justify-start mb-6">
+                        <div className="max-w-3xl">
+                          <LoadingBubble />
                         </div>
                       </div>
                     )}
