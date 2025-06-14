@@ -26,7 +26,7 @@ export async function analyzeConflict(conflictDescription: string): Promise<Anal
     }
 
     // Extract the three analyses from the response
-    const { claudeAnalysis, googleAnalysis, openaiAnalysis } = data;
+    const { claudeAnalysis, googleAnalysis, openaiAnalysis, wisdomOfCrowd } = data;
     
     if (!claudeAnalysis && !googleAnalysis && !openaiAnalysis) {
       throw new Error("No analysis data returned from any API");
@@ -34,13 +34,20 @@ export async function analyzeConflict(conflictDescription: string): Promise<Anal
 
     console.log("Multi-AI analysis completed successfully");
     
-    // Return the analysis result with all three analyses
-    return {
+    // Return the analysis result with all three analyses and wisdom of crowd
+    const result: AnalysisResult = {
       empathyAnalysis: claudeAnalysis,
       strategyAnalysis: googleAnalysis, 
       devilsAdvocateAnalysis: openaiAnalysis,
       detectedLanguage: 'en' // Default to English for now
     };
+
+    // Add wisdom of crowd data if available
+    if (wisdomOfCrowd) {
+      result.wisdomOfCrowd = wisdomOfCrowd;
+    }
+
+    return result;
 
   } catch (error) {
     console.error("Error in analyzeConflict:", error);

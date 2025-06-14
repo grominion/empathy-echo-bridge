@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Standard CORS headers
 const corsHeaders = {
@@ -34,6 +35,11 @@ serve(async (req) => {
     if (missingKeys.length > 0) {
       throw new Error(`Missing API keys: ${missingKeys.join(', ')}`)
     }
+
+    // Initialize Supabase client for database operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Define the three API calls
     const callAnthropic = async () => {
@@ -92,7 +98,7 @@ Now, provide your analysis using these exact three Markdown headings and nothing
           body: JSON.stringify({
             contents: [{
               parts: [{
-                text: `You are a cold, rational strategist. Analyze this conflict: ${conflictDescription}. Do not focus on feelings. Identify the core interests and propose a 3-step tactical plan for de-escalation.`
+                text: `You are a cold, rational strategist. Your entire response must be in the exact same language as the user's text. Analyze this conflict: ${conflictDescription}. Do not focus on feelings. Identify the core interests and propose a 3-step tactical plan for de-escalation.`
               }]
             }],
             generationConfig: {
@@ -129,7 +135,11 @@ Now, provide your analysis using these exact three Markdown headings and nothing
             messages: [
               {
                 role: 'user',
-                content: `You are a cynical Devil's Advocate. Read this conflict: ${conflictDescription}. Prepare the user for the worst possible response. What are the most unfair or manipulative arguments the other person could use? List them as bullet points.`
+                content: `You are a cynical Devil's Advocate. Your entire response must be in the exact same language as the user's text. Read this conflict: ${conflictDescription}. Prepare the user for the worst possible responses. For each unfair, manipulative, or irrational argument you list, you MUST immediately follow it with a concise, tactical 'Counter-Strategy' on how to neutralize the attack without escalating.
+
+Example Output Format:
+- **Appeal to Authority:** "I'm older, so I know better."
+- **Counter-Strategy:** Acknowledge their experience but gently pivot back to your feelings. "I respect your experience, and I'd like to share how this situation feels from my perspective."`
               }
             ]
           })
@@ -158,13 +168,83 @@ Now, provide your analysis using these exact three Markdown headings and nothing
 
     console.log('All API calls completed')
 
+    // Process Wisdom of the Crowd if Claude analysis succeeded
+    let wisdomOfCrowd = null
+    if (claudeAnalysis && !claudeAnalysis.startsWith('Error calling Claude:')) {
+      try {
+        // Extract the emotional bridge text from Claude's response
+        const bridgeMatch = claudeAnalysis.match(/### The Emotional Bridge\s*\n\n?([\s\S]*?)(?=\n### |$)/i)
+        if (bridgeMatch && bridgeMatch[1]) {
+          const bridgeText = bridgeMatch[1].trim()
+          
+          // Perform UPSERT operation on emotional_bridges table
+          const { data: upsertData, error: upsertError } = await supabase
+            .from('emotional_bridges')
+            .upsert(
+              { bridge_text: bridgeText, occurrence_count: 1 },
+              { 
+                onConflict: 'bridge_text',
+                count: 'exact'
+              }
+            )
+            .select()
+
+          if (upsertError) {
+            // If upsert failed due to conflict, increment the existing count
+            const { error: updateError } = await supabase
+              .from('emotional_bridges')
+              .update({ 
+                occurrence_count: supabase.rpc('increment_count'),
+                updated_at: new Date().toISOString()
+              })
+              .eq('bridge_text', bridgeText)
+
+            if (updateError) {
+              console.error('Error updating bridge count:', updateError)
+            }
+          }
+
+          // Get the current count for this bridge and total count
+          const { data: currentBridge } = await supabase
+            .from('emotional_bridges')
+            .select('occurrence_count')
+            .eq('bridge_text', bridgeText)
+            .single()
+
+          const { data: totalCountData } = await supabase
+            .rpc('get_total_bridge_count')
+
+          if (currentBridge && totalCountData !== null) {
+            const percentage = Math.round((currentBridge.occurrence_count / totalCountData) * 100)
+            
+            wisdomOfCrowd = {
+              text: bridgeText,
+              count: currentBridge.occurrence_count,
+              totalAnalyzed: totalCountData,
+              percentage: percentage
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error processing wisdom of crowd:', error)
+        // Continue without wisdom data if there's an error
+      }
+    }
+
     // Send the consolidated response back to the frontend
+    const response = { 
+      claudeAnalysis,
+      googleAnalysis,
+      openaiAnalysis
+    }
+
+    // Add wisdom of crowd data if available
+    if (wisdomOfCrowd) {
+      response.wisdomOfCrowd = wisdomOfCrowd
+    }
+
     return new Response(
-      JSON.stringify({ 
-        claudeAnalysis,
-        googleAnalysis,
-        openaiAnalysis
-      }),
+      JSON.stringify(response),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
