@@ -1,5 +1,6 @@
 
-import { AnalysisResult } from '../components/EchoSimulator';
+import { AnalysisResult } from '../pages/Conversation';
+import { ConversationTurn } from '../pages/Conversation';
 import { supabase } from '@/integrations/supabase/client';
 
 export const analyzeConflict = async (conflictDescription: string): Promise<AnalysisResult> => {
@@ -27,5 +28,34 @@ export const analyzeConflict = async (conflictDescription: string): Promise<Anal
   } catch (error) {
     console.error('Analysis call failed:', error);
     throw new Error(`Failed to analyze conflict: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+export const continueCoaching = async (conversationHistory: ConversationTurn[]): Promise<AnalysisResult> => {
+  console.log('Making coaching continuation call:', conversationHistory);
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('analyze-conflict', {
+      body: {
+        conversationHistory: conversationHistory,
+        isCoachMode: true
+      }
+    });
+
+    if (error) {
+      console.error('Supabase coaching function error:', error);
+      throw new Error(`Coaching analysis failed: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No data received from coaching analysis function');
+    }
+
+    console.log('Coaching analysis result received:', data);
+    return data as AnalysisResult;
+    
+  } catch (error) {
+    console.error('Coaching analysis call failed:', error);
+    throw new Error(`Failed to analyze conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
