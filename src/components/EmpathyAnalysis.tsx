@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Bridge, MessageSquare, RotateCcw, User, ArrowRight } from 'lucide-react';
+import { Heart, Link, MessageSquare, RotateCcw, User, ArrowRight } from 'lucide-react';
 import { AnalysisResult } from './EchoSimulator';
 
 interface EmpathyAnalysisProps {
@@ -70,7 +69,7 @@ export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onRe
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-xl text-slate-800">
               <div className="p-2 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg">
-                <Bridge className="w-5 h-5 text-purple-700" />
+                <Link className="w-5 h-5 text-purple-700" />
               </div>
               The Emotional Bridge
             </CardTitle>
