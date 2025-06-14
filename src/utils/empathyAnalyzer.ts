@@ -1,39 +1,67 @@
 
 import { AnalysisResult } from '../components/EchoSimulator';
 
+const ANTHROPIC_API_KEY = "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";
+
 export const analyzeConflict = async (conflictDescription: string): Promise<AnalysisResult> => {
-  // Simulate AI processing delay
-  await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+  console.log('Making API call to Anthropic with user input:', conflictDescription);
   
-  // Build the diagnostic AI prompt with user input
-  const prompt = `You are a diagnostic tool. Your only purpose is to report information.
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-opus-20240229',
+        max_tokens: 2048,
+        messages: [
+          {
+            role: 'user',
+            content: `You are an expert psychologist. Your single task is to analyze the text inside the "USER TEXT" block below and provide a structured, three-part analysis. Your entire response must be in the exact same language as the user's text.
 
-Follow these two instructions precisely:
+--- USER TEXT BEGINS ---
+${conflictDescription}
+--- USER TEXT ENDS ---
 
-1.  **IDENTIFY YOURSELF:** Start your response with the phrase "AI Model Identity:" and then state the name of the AI model you are (e.g., Claude 3, GPT-4, etc.).
-2.  **REPORT THE INPUT:** On a new line, start with the phrase "User Input Received:" and then repeat the EXACT, verbatim text you received as the user input for this request. If you received nothing, write "NULL".
+Now, provide your analysis using these exact three Markdown headings and nothing else:
 
-[USER_INPUT]
-${conflictDescription}`;
+### The Other Perspective
+(Your first-person analysis goes here)
 
-  console.log('Diagnostic AI prompt with user input:', prompt);
-  console.log('User input being analyzed:', conflictDescription);
-  
-  // For diagnostic purposes, simulate the AI response with the expected format
-  const diagnosticResponse = `AI Model Identity: Simulated AI Model (Test Environment)
+### The Emotional Bridge
+(Your analysis of the shared emotion goes here)
 
-User Input Received: ${conflictDescription || 'NULL'}`;
-  
-  console.log('Diagnostic response:', diagnosticResponse);
-  
-  const analysis: AnalysisResult = {
-    detectedLanguage: 'English',
-    otherPerspective: diagnosticResponse,
-    emotionalBridge: '',
-    translator: []
-  };
-  
-  console.log('Analysis result:', analysis);
-  
-  return analysis;
+### The Translator for your next discussion
+(Your "Don't say / Instead, try" advice goes here)`
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('API response received:', data);
+    
+    const aiResponse = data.content[0].text;
+    
+    const analysis: AnalysisResult = {
+      detectedLanguage: 'English',
+      otherPerspective: aiResponse,
+      emotionalBridge: '',
+      translator: []
+    };
+    
+    console.log('Analysis result:', analysis);
+    
+    return analysis;
+  } catch (error) {
+    console.error('API call failed:', error);
+    throw new Error(`Failed to analyze conflict: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 };
