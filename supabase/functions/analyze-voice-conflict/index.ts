@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
@@ -103,12 +102,12 @@ serve(async (req) => {
     console.log('Transcription completed:', transcribedText);
     console.log('Sentiment data:', sentimentData);
 
-    // Step 2: Prepare AI API calls with the transcribed text
+    // Retrieve API keys for external models
     const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    // Enhanced Claude prompt with sentiment context
+    // Prepare prompts as before
     const claudePrompt = `You are an expert psychologist and empathy coach. Analyze the following conflict situation.
 
 CRITICAL CONTEXT: The user's voice was analyzed and detected with the following emotional profile:
@@ -132,13 +131,16 @@ Your task is to deeply understand the other person's perspective in this conflic
 
 Write your response in a warm, understanding tone. Be specific and actionable.`;
 
-    // Parallel API calls
-    const apiCalls = [];
+    // Sequential API calls instead of parallel
 
-    // Claude API call (with sentiment-enhanced prompt)
+    let claudeAnalysis = null;
+    let googleAnalysis = null;
+    let openaiAnalysis = null;
+
+    // 1. Claude (Anthropic)
     if (claudeApiKey) {
-      apiCalls.push(
-        fetch('https://api.anthropic.com/v1/messages', {
+      try {
+        const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -155,14 +157,18 @@ Write your response in a warm, understanding tone. Be specific and actionable.`;
               }
             ]
           })
-        }).then(res => res.json()).then(data => ({ source: 'claude', data }))
-      );
+        });
+        const claudeData = await claudeRes.json();
+        claudeAnalysis = claudeData.content && claudeData.content[0] ? claudeData.content[0].text : null;
+      } catch (err) {
+        console.error('Claude API call failed:', err);
+      }
     }
 
-    // Google API call
+    // 2. Google (Gemini)
     if (googleApiKey) {
-      apiCalls.push(
-        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${googleApiKey}`, {
+      try {
+        const googleRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${googleApiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -184,14 +190,20 @@ Be practical and strategic in your response.`
               }]
             }]
           })
-        }).then(res => res.json()).then(data => ({ source: 'google', data }))
-      );
+        });
+        const googleData = await googleRes.json();
+        googleAnalysis = googleData.candidates && googleData.candidates[0]
+          ? googleData.candidates[0].content.parts[0].text
+          : null;
+      } catch (err) {
+        console.error('Google API call failed:', err);
+      }
     }
 
-    // OpenAI API call (structured JSON response)
+    // 3. OpenAI (GPT-4)
     if (openaiApiKey) {
-      apiCalls.push(
-        fetch('https://api.openai.com/v1/chat/completions', {
+      try {
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${openaiApiKey}`,
@@ -224,38 +236,20 @@ Example of the required JSON format:
               }
             ]
           })
-        }).then(res => res.json()).then(data => ({ source: 'openai', data }))
-      );
-    }
-
-    // Execute all API calls in parallel
-    const results = await Promise.allSettled(apiCalls);
-    
-    // Process results
-    let claudeAnalysis = null;
-    let googleAnalysis = null;
-    let openaiAnalysis = null;
-
-    results.forEach((result) => {
-      if (result.status === 'fulfilled') {
-        const { source, data } = result.value;
-        
-        if (source === 'claude' && data.content && data.content[0]) {
-          claudeAnalysis = data.content[0].text;
-        } else if (source === 'google' && data.candidates && data.candidates[0]) {
-          googleAnalysis = data.candidates[0].content.parts[0].text;
-        } else if (source === 'openai' && data.choices && data.choices[0]) {
-          try {
-            openaiAnalysis = JSON.parse(data.choices[0].message.content);
-          } catch (e) {
-            console.error('Failed to parse OpenAI JSON response:', e);
-            openaiAnalysis = data.choices[0].message.content;
-          }
+        });
+        const openaiData = await openaiRes.json();
+        try {
+          openaiAnalysis = JSON.parse(openaiData.choices[0].message.content);
+        } catch (e) {
+          console.error('Failed to parse OpenAI JSON response:', e);
+          openaiAnalysis = openaiData.choices && openaiData.choices[0] && openaiData.choices[0].message
+            ? openaiData.choices[0].message.content
+            : null;
         }
-      } else {
-        console.error(`API call failed:`, result.reason);
+      } catch (err) {
+        console.error('OpenAI API call failed:', err);
       }
-    });
+    }
 
     // Get wisdom of crowd data
     let wisdomOfCrowd = null;
