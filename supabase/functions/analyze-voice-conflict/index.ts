@@ -93,6 +93,9 @@ serve(async (req) => {
     }
 
     const transcribedText = transcript.text;
+    console.log('AssemblyAI Transcript Type:', typeof transcribedText);
+    console.log('AssemblyAI Transcribed Text:', transcribedText);
+
     const sentimentData = {
       sentiment: transcript.sentiment_analysis_results?.[0]?.sentiment || 'neutral',
       confidence: transcript.sentiment_analysis_results?.[0]?.confidence || 0,
@@ -118,7 +121,7 @@ Use this emotional context to inform your analysis and provide more nuanced, emo
 
 The user said:
 --- USER TEXT BEGINS ---
-${transcribedText}
+${typeof transcribedText === 'string' ? transcribedText : JSON.stringify(transcribedText)}
 --- USER TEXT ENDS ---
 
 Your task is to deeply understand the other person's perspective in this conflict. Think like a master negotiator and psychologist. Provide:
