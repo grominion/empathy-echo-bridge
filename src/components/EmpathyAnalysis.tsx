@@ -11,7 +11,7 @@ interface EmpathyAnalysisProps {
 }
 
 export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onReset }) => {
-  // Parse the AI output to extract the three sections
+  // Parse the AI output to extract the three sections using the exact Markdown headings
   const parseAnalysis = (text: string) => {
     const sections = {
       otherPerspective: '',
@@ -19,8 +19,9 @@ export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onRe
       translator: ''
     };
 
+    // Use the exact Markdown headings from the prompt
     const otherPerspectiveMatch = text.match(/### The Other Perspective\s*([\s\S]*?)(?=### The Emotional Bridge|$)/);
-    const emotionalBridgeMatch = text.match(/### The Emotional Bridge\s*([\s\S]*?)(?=### The Translator|$)/);
+    const emotionalBridgeMatch = text.match(/### The Emotional Bridge\s*([\s\S]*?)(?=### The Translator for your next discussion|$)/);
     const translatorMatch = text.match(/### The Translator for your next discussion\s*([\s\S]*?)$/);
 
     if (otherPerspectiveMatch) {
@@ -32,6 +33,8 @@ export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onRe
     if (translatorMatch) {
       sections.translator = translatorMatch[1].trim();
     }
+
+    console.log('Parsed sections:', sections);
 
     return sections;
   };
@@ -85,7 +88,7 @@ export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onRe
           </CardContent>
         </Card>
 
-        {/* The Translator */}
+        {/* The Translator for your next discussion */}
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl text-slate-800 flex items-center justify-center gap-2">
