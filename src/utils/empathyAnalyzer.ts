@@ -1,6 +1,6 @@
 
 import { AnalysisResult } from '../components/EchoSimulator';
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export const analyzeConflict = async (conflictDescription: string): Promise<AnalysisResult> => {
   console.log('Making secure API call via Supabase Edge Function:', conflictDescription);
