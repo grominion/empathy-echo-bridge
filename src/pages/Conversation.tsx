@@ -73,8 +73,8 @@ const Conversation: React.FC = () => {
     }, 500);
   }, []);
 
-  const handleAnalyze = async (conflictDescription: string) => {
-    console.log("Starting new analysis...");
+  const handleAnalyze = async (audioData: string) => {
+    console.log("Starting new audio analysis...");
     
     setError(null);
     setIsAnalyzing(true);
@@ -84,7 +84,7 @@ const Conversation: React.FC = () => {
       ...conversationHistory,
       {
         type: 'initial_problem',
-        content: conflictDescription,
+        content: 'Voice message recorded', // Placeholder text for audio
         timestamp: Date.now()
       },
       {
@@ -97,7 +97,7 @@ const Conversation: React.FC = () => {
     setConversationHistory(newConversation);
     
     try {
-      const result = await analyzeConflict(conflictDescription);
+      const result = await analyzeConflict(audioData, true); // Pass true to indicate audio input
       console.log("Analysis completed successfully");
       
       // Replace loading bubble with actual analysis

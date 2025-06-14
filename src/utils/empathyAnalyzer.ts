@@ -2,12 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ConversationTurn, AnalysisResult } from "@/pages/Conversation";
 
-export async function analyzeConflict(conflictDescription: string): Promise<AnalysisResult> {
+export async function analyzeConflict(input: string, isAudio: boolean = false): Promise<AnalysisResult> {
   console.log("Calling analyze-conflict edge function...");
   
   try {
+    const body = isAudio 
+      ? { audioData: input }
+      : { conflictDescription: input };
+
     const { data, error } = await supabase.functions.invoke('analyze-conflict', {
-      body: { conflictDescription }
+      body
     });
 
     if (error) {
@@ -66,5 +70,5 @@ export async function continueCoaching(conversationHistory: ConversationTurn[]):
     throw new Error("No user message found to continue coaching");
   }
   
-  return analyzeConflict(lastUserMessage.content);
+  return analyzeConflict(lastUserMessage.content, false); // Always use text for continue coaching
 }

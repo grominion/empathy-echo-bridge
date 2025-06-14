@@ -19,15 +19,15 @@ export const EchoSimulator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAnalyze = async (conflictDescription: string) => {
-    console.log("Button Clicked!");
-    console.log("Conflict description received:", conflictDescription);
+  const handleAnalyze = async (audioData: string) => {
+    console.log("Audio Recording Received!");
+    console.log("Audio data length:", audioData.length);
     
     setError(null);
     setIsLoading(true);
     
     try {
-      const result = await analyzeConflict(conflictDescription);
+      const result = await analyzeConflict(audioData, true); // Pass true for audio input
       navigate('/result', { state: { analysis: result } });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
@@ -38,7 +38,7 @@ export const EchoSimulator: React.FC = () => {
     }
   };
 
-  console.log("Component Rendered");
+  console.log("EchoSimulator Component Rendered");
 
   return (
     <div className="space-y-8">
