@@ -82,7 +82,60 @@ const Conversation: React.FC = () => {
     }, 500);
   }, []);
 
-  const handleAnalyze = async (audioData: string) => {
+  const handleAnalyze = async (conflictText: string) => {
+    console.log("Starting new text analysis...");
+    
+    setError(null);
+    setIsAnalyzing(true);
+    
+    // Add loading bubble immediately
+    const newConversation: ConversationTurn[] = [
+      ...conversationHistory,
+      {
+        type: 'initial_problem',
+        content: conflictText,
+        timestamp: Date.now()
+      },
+      {
+        type: 'ai_analysis',
+        content: '', // Will be replaced when analysis completes
+        timestamp: Date.now(),
+        isLoading: true
+      }
+    ];
+    setConversationHistory(newConversation);
+    
+    try {
+      const result = await analyzeConflict(conflictText, false); // Pass false to indicate text input
+      console.log("Analysis completed successfully");
+      
+      // Replace loading bubble with actual analysis
+      const completedConversation = newConversation.map((turn, index) => {
+        if (index === newConversation.length - 1 && turn.isLoading) {
+          return {
+            ...turn,
+            content: result.empathyAnalysis || result.otherPerspective || 'Analysis completed',
+            isLoading: false,
+            fullAnalysis: result
+          };
+        }
+        return turn;
+      });
+      
+      setConversationHistory(completedConversation);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      setError(errorMessage);
+      console.error("Analysis failed:", e);
+      
+      // Remove loading bubble on error
+      setConversationHistory(conversationHistory);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleVoiceAnalyze = async (audioData: string) => {
     console.log("Starting new audio analysis...");
     
     setError(null);
@@ -93,7 +146,7 @@ const Conversation: React.FC = () => {
       ...conversationHistory,
       {
         type: 'initial_problem',
-        content: 'Voice message recorded', // Placeholder text for audio
+        content: audioData, // Store audio data reference
         timestamp: Date.now()
       },
       {
@@ -126,7 +179,7 @@ const Conversation: React.FC = () => {
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
-      console.error("Analysis failed:", e);
+      console.error("Voice analysis failed:", e);
       
       // Remove loading bubble on error
       setConversationHistory(conversationHistory);
@@ -210,9 +263,6 @@ const Conversation: React.FC = () => {
       case 'initial_problem':
         return (
           <div key={index} className="mb-6">
-            <div className="text-slate-500 text-sm mb-1">
-              You started the conversation...
-            </div>
             <EditableMessage
               content={turn.content}
               onEdit={(newContent) => handleEditMessage(index, newContent)}
@@ -223,9 +273,6 @@ const Conversation: React.FC = () => {
       case 'ai_analysis':
         return (
           <div key={index} className="mb-6">
-            <div className="text-blue-500 text-sm mb-1">
-              ECHO analyzed the situation...
-            </div>
             {turn.isLoading ? (
               <LoadingBubble />
             ) : (
@@ -236,9 +283,6 @@ const Conversation: React.FC = () => {
       case 'their_reply':
         return (
           <div key={index} className="mb-6">
-            <div className="text-green-500 text-sm mb-1">
-              They replied...
-            </div>
             <div className="text-gray-700 whitespace-pre-wrap leading-relaxed bg-green-50/50 rounded-lg p-4">
               {turn.content}
             </div>
@@ -278,7 +322,7 @@ const Conversation: React.FC = () => {
 
       {/* Initial Conflict Input or Continue Input */}
       {!hasInitialProblem ? (
-        <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+        <ConflictInput onAnalyze={handleAnalyze} onVoiceAnalyze={handleVoiceAnalyze} isAnalyzing={isAnalyzing} />
       ) : canContinue ? (
         <ContinueInput onContinue={handleContinueConversation} isAnalyzing={isAnalyzing} />
       ) : null}
