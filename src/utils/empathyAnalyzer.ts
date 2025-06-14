@@ -1,61 +1,60 @@
 
-import { AnalysisResult } from '../pages/Conversation';
-import { ConversationTurn } from '../pages/Conversation';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { ConversationTurn, AnalysisResult } from "@/pages/Conversation";
 
-export const analyzeConflict = async (conflictDescription: string): Promise<AnalysisResult> => {
-  console.log('Making secure API call via Supabase Edge Function:', conflictDescription);
+export async function analyzeConflict(conflictDescription: string): Promise<AnalysisResult> {
+  console.log("Calling analyze-conflict edge function...");
   
   try {
     const { data, error } = await supabase.functions.invoke('analyze-conflict', {
-      body: {
-        conflictDescription: conflictDescription
-      }
+      body: { conflictDescription }
     });
 
     if (error) {
-      console.error('Supabase function error:', error);
-      throw new Error(`Analysis failed: ${error.message}`);
+      console.error("Supabase function error:", error);
+      throw new Error(`Function call failed: ${error.message}`);
     }
 
     if (!data) {
-      throw new Error('No data received from analysis function');
+      throw new Error("No data returned from analysis function");
     }
 
-    console.log('Analysis result received:', data);
-    return data as AnalysisResult;
-    
-  } catch (error) {
-    console.error('Analysis call failed:', error);
-    throw new Error(`Failed to analyze conflict: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
+    // Check if the response contains an error
+    if (data.error) {
+      console.error("Backend error:", data.error);
+      throw new Error(data.error);
+    }
 
-export const continueCoaching = async (conversationHistory: ConversationTurn[]): Promise<AnalysisResult> => {
-  console.log('Making coaching continuation call:', conversationHistory);
+    // Extract the analysis from the response
+    const analysis = data.analysis;
+    if (!analysis) {
+      throw new Error("No analysis data returned from backend");
+    }
+
+    console.log("Analysis completed successfully");
+    
+    // Return the analysis result
+    return {
+      empathyAnalysis: analysis,
+      detectedLanguage: 'en' // Default to English for now
+    };
+
+  } catch (error) {
+    console.error("Error in analyzeConflict:", error);
+    throw error;
+  }
+}
+
+export async function continueCoaching(conversationHistory: ConversationTurn[]): Promise<AnalysisResult> {
+  // For now, just use the same analysis function
+  // This could be enhanced to provide more context-aware responses
+  const lastUserMessage = conversationHistory
+    .filter(turn => turn.type === 'initial_problem' || turn.type === 'their_reply')
+    .pop();
   
-  try {
-    const { data, error } = await supabase.functions.invoke('analyze-conflict', {
-      body: {
-        conversationHistory: conversationHistory,
-        isCoachMode: true
-      }
-    });
-
-    if (error) {
-      console.error('Supabase coaching function error:', error);
-      throw new Error(`Coaching analysis failed: ${error.message}`);
-    }
-
-    if (!data) {
-      throw new Error('No data received from coaching analysis function');
-    }
-
-    console.log('Coaching analysis result received:', data);
-    return data as AnalysisResult;
-    
-  } catch (error) {
-    console.error('Coaching analysis call failed:', error);
-    throw new Error(`Failed to analyze conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  if (!lastUserMessage) {
+    throw new Error("No user message found to continue coaching");
   }
-};
+  
+  return analyzeConflict(lastUserMessage.content);
+}
