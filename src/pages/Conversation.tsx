@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { ConflictInput } from '../components/ConflictInput';
 import { CoachAnalysis } from '../components/CoachAnalysis';
 import { ContinueInput } from '../components/ContinueInput';
+import { StartNewConversationFab } from '../components/StartNewConversationFab';
+import { EditableMessage } from '../components/EditableMessage';
 import { analyzeConflict, continueCoaching } from '../utils/empathyAnalyzer';
 
 export interface ConversationTurn {
@@ -25,6 +27,11 @@ const Conversation = () => {
   const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleStartNewConversation = () => {
+    setConversationHistory([]);
+    setError(null);
+  };
 
   const handleInitialAnalysis = async (conflictDescription: string) => {
     console.log("Initial analysis requested:", conflictDescription);
@@ -99,11 +106,62 @@ const Conversation = () => {
     }
   };
 
+  const handleEditLastReply = async (newContent: string) => {
+    console.log("Editing last reply:", newContent);
+    
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      // Find the last user reply and update it
+      const updatedHistory = [...conversationHistory];
+      const lastReplyIndex = updatedHistory.findLastIndex(turn => turn.type === 'their_reply');
+      
+      if (lastReplyIndex !== -1) {
+        updatedHistory[lastReplyIndex] = {
+          ...updatedHistory[lastReplyIndex],
+          content: newContent,
+          timestamp: new Date()
+        };
+        
+        // Remove any AI analysis that came after this reply
+        const historyUpToReply = updatedHistory.slice(0, lastReplyIndex + 1);
+        setConversationHistory(historyUpToReply);
+        
+        // Get new analysis with updated history
+        const result = await continueCoaching(historyUpToReply);
+        
+        // Add the new AI analysis
+        const analysisTurn: ConversationTurn = {
+          type: 'ai_analysis',
+          content: result.otherPerspective,
+          timestamp: new Date()
+        };
+        
+        setConversationHistory(prev => [...prev, analysisTurn]);
+      }
+      
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      setError(errorMessage);
+      console.error("Error editing conversation:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isConversationStarted = conversationHistory.length > 0;
-  const lastAnalysis = conversationHistory.filter(turn => turn.type === 'ai_analysis').pop();
+  const getLastUserReplyIndex = () => {
+    return conversationHistory.findLastIndex(turn => turn.type === 'their_reply');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <StartNewConversationFab 
+        onStartNew={handleStartNewConversation}
+        isVisible={isConversationStarted}
+      />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <header className="text-center mb-12">
@@ -126,27 +184,37 @@ const Conversation = () => {
           ) : (
             <div className="space-y-8">
               {/* Conversation Thread */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {conversationHistory.map((turn, index) => (
-                  <div key={index} className="space-y-4">
+                  <div key={index}>
                     {turn.type === 'initial_problem' && (
-                      <div className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3">Your Initial Conflict</h3>
-                        <div className="text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50 rounded-lg p-4">
-                          {turn.content}
+                      <div className="flex justify-end mb-6">
+                        <div className="max-w-3xl bg-blue-500 text-white rounded-2xl rounded-br-sm px-6 py-4 shadow-lg">
+                          <h3 className="text-sm font-semibold text-blue-100 mb-2 uppercase tracking-wide">Your Initial Conflict</h3>
+                          <div className="text-white whitespace-pre-wrap leading-relaxed">
+                            {turn.content}
+                          </div>
                         </div>
                       </div>
                     )}
                     
                     {turn.type === 'ai_analysis' && (
-                      <CoachAnalysis analysis={{ otherPerspective: turn.content }} />
+                      <div className="flex justify-start mb-6">
+                        <div className="max-w-3xl">
+                          <CoachAnalysis analysis={{ otherPerspective: turn.content }} />
+                        </div>
+                      </div>
                     )}
                     
                     {turn.type === 'their_reply' && (
-                      <div className="bg-amber-50/80 backdrop-blur-sm border border-amber-200 shadow-lg rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-amber-800 mb-3">Their Reply</h3>
-                        <div className="text-amber-700 whitespace-pre-wrap leading-relaxed bg-amber-100/50 rounded-lg p-4">
-                          {turn.content}
+                      <div className="flex justify-end mb-6">
+                        <div className="max-w-3xl bg-amber-50 border border-amber-200 shadow-lg rounded-2xl rounded-br-sm p-6">
+                          <h3 className="text-sm font-semibold text-amber-800 mb-3 uppercase tracking-wide">Their Reply</h3>
+                          <EditableMessage
+                            content={turn.content}
+                            onEdit={handleEditLastReply}
+                            isLastUserMessage={index === getLastUserReplyIndex()}
+                          />
                         </div>
                       </div>
                     )}

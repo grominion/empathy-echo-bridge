@@ -11,19 +11,19 @@ interface CoachAnalysisProps {
 
 export const CoachAnalysis: React.FC<CoachAnalysisProps> = ({ analysis }) => {
   return (
-    <Card className="bg-blue-50/80 backdrop-blur-sm border border-blue-200 shadow-xl">
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-xl text-blue-800 flex items-center justify-center gap-2">
-          <MessageSquare className="w-6 h-6 text-blue-600" />
+    <Card className="bg-white/90 backdrop-blur-sm border border-slate-200 shadow-xl rounded-2xl rounded-tl-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg text-slate-800 flex items-center gap-2">
+          <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full">
+            <MessageSquare className="w-5 h-5 text-blue-600" />
+          </div>
           ECHO Coach Analysis
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="bg-white/60 rounded-lg p-6">
-          <div className="prose prose-slate max-w-none">
-            <div className="text-slate-700 whitespace-pre-wrap leading-relaxed">
-              {analysis.otherPerspective}
-            </div>
+        <div className="prose prose-slate max-w-none">
+          <div className="text-slate-700 whitespace-pre-wrap leading-relaxed">
+            {analysis.otherPerspective}
           </div>
         </div>
       </CardContent>
