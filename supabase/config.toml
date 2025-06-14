@@ -1,1 +1,5 @@
+
 project_id = "tzvinmtqaasxfnpznpux"
+
+[functions.analyze-conflict]
+verify_jwt = false
