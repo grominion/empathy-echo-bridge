@@ -1,290 +1,272 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Send, Loader2, RefreshCcw } from 'lucide-react';
+import { EchoSimulator } from '../components/EchoSimulator';
+import { EmpathyAnalysis } from '../components/EmpathyAnalysis';
 import { ConflictInput } from '../components/ConflictInput';
-import { CoachAnalysis } from '../components/CoachAnalysis';
-import { ContinueInput } from '../components/ContinueInput';
-import { StartNewConversationFab } from '../components/StartNewConversationFab';
-import { EditableMessage } from '../components/EditableMessage';
-import { LoadingBubble } from '../components/LoadingBubble';
 import { analyzeConflict, continueCoaching } from '../utils/empathyAnalyzer';
-
-export interface ConversationTurn {
-  type: 'initial_problem' | 'ai_analysis' | 'their_reply' | 'loading';
-  content: string;
-  timestamp: Date;
-}
+import { EditableMessage } from '../components/EditableMessage';
+import { ContinueInput } from '../components/ContinueInput';
+import { CoachAnalysis } from '@/components/CoachAnalysis';
+import { LoadingBubble } from '@/components/LoadingBubble';
+import { StartNewConversationFab } from '@/components/StartNewConversationFab';
 
 export interface AnalysisResult {
-  otherPerspective: string;
-  emotionalBridge: string;
-  translator: Array<{
+  empathyAnalysis?: string;
+  strategyAnalysis?: string;
+  devilsAdvocateAnalysis?: string;
+  wisdomOfCrowd?: {
+    text: string;
+    count: number;
+    totalAnalyzed: number;
+    percentage: number;
+  };
+  otherPerspective?: string; // Keep for backward compatibility
+  emotionalBridge?: string;
+  translator?: Array<{
     dontSay: string;
     insteadTry: string;
   }>;
   detectedLanguage: string;
 }
 
-const Conversation = () => {
-  const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export interface ConversationTurn {
+  type: 'initial_problem' | 'ai_analysis' | 'their_reply';
+  content: string;
+  timestamp: number;
+  isLoading?: boolean;
+  fullAnalysis?: AnalysisResult;
+}
 
-  const handleStartNewConversation = () => {
+const Conversation: React.FC = () => {
+  const [conversationHistory, setConversationHistory] = useState<ConversationTurn[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showNewConversationFab, setShowNewConversationFab] = useState(false);
+
+  useEffect(() => {
+    // Simulate a delay to show the FAB after the component mounts
+    const timer = setTimeout(() => {
+      setShowNewConversationFab(true);
+    }, 500);
+
+    return () => clearTimeout(timer); // Clear the timer if the component unmounts
+  }, []);
+
+  const startNewConversation = useCallback(() => {
+    console.log("Starting a completely new conversation");
     setConversationHistory([]);
     setError(null);
-  };
+    setShowNewConversationFab(false);
 
-  const handleInitialAnalysis = async (conflictDescription: string) => {
-    console.log("Initial analysis requested:", conflictDescription);
+    // Slight delay before showing the FAB again
+    setTimeout(() => {
+      setShowNewConversationFab(true);
+    }, 500);
+  }, []);
+
+  const handleAnalyze = async (conflictDescription: string) => {
+    console.log("Starting new analysis...");
     
     setError(null);
-    setIsLoading(true);
+    setIsAnalyzing(true);
     
-    try {
-      // Add the initial problem to conversation history
-      const initialTurn: ConversationTurn = {
+    // Add loading bubble immediately
+    const newConversation: ConversationTurn[] = [
+      ...conversationHistory,
+      {
         type: 'initial_problem',
         content: conflictDescription,
-        timestamp: new Date()
-      };
-      
-      // Add loading bubble
-      const loadingTurn: ConversationTurn = {
-        type: 'loading',
-        content: 'Thinking...',
-        timestamp: new Date()
-      };
-      
-      setConversationHistory([initialTurn, loadingTurn]);
-      
-      const result = await analyzeConflict(conflictDescription);
-      
-      // Replace loading bubble with AI analysis
-      const analysisTurn: ConversationTurn = {
+        timestamp: Date.now()
+      },
+      {
         type: 'ai_analysis',
-        content: result.otherPerspective,
-        timestamp: new Date()
-      };
+        content: '', // Will be replaced when analysis completes
+        timestamp: Date.now(),
+        isLoading: true
+      }
+    ];
+    setConversationHistory(newConversation);
+    
+    try {
+      const result = await analyzeConflict(conflictDescription);
+      console.log("Analysis completed successfully");
       
-      setConversationHistory([initialTurn, analysisTurn]);
+      // Replace loading bubble with actual analysis
+      const completedConversation = newConversation.map((turn, index) => {
+        if (index === newConversation.length - 1 && turn.isLoading) {
+          return {
+            ...turn,
+            content: result.empathyAnalysis || result.otherPerspective || 'Analysis completed',
+            isLoading: false,
+            fullAnalysis: result
+          };
+        }
+        return turn;
+      });
       
+      setConversationHistory(completedConversation);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
+      console.error("Analysis failed:", e);
+      
       // Remove loading bubble on error
-      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
-      console.error("A critical error occurred:", e);
+      setConversationHistory(conversationHistory);
     } finally {
-      setIsLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
   const handleContinueConversation = async (theirReply: string) => {
-    console.log("Continue conversation:", theirReply);
+    console.log("Continuing conversation with reply:", theirReply);
     
     setError(null);
-    setIsLoading(true);
+    setIsAnalyzing(true);
     
-    try {
-      // Add their reply to conversation history
-      const replyTurn: ConversationTurn = {
+    // Add their reply and loading bubble
+    const updatedHistory: ConversationTurn[] = [
+      ...conversationHistory,
+      {
         type: 'their_reply',
         content: theirReply,
-        timestamp: new Date()
-      };
-      
-      // Add loading bubble
-      const loadingTurn: ConversationTurn = {
-        type: 'loading',
-        content: 'Thinking...',
-        timestamp: new Date()
-      };
-      
-      const updatedHistory = [...conversationHistory, replyTurn, loadingTurn];
-      setConversationHistory(updatedHistory);
-      
-      const result = await continueCoaching(updatedHistory.filter(turn => turn.type !== 'loading'));
-      
-      // Replace loading bubble with new AI analysis
-      const analysisTurn: ConversationTurn = {
+        timestamp: Date.now()
+      },
+      {
         type: 'ai_analysis',
-        content: result.otherPerspective,
-        timestamp: new Date()
-      };
-      
-      setConversationHistory(prev => [
-        ...prev.filter(turn => turn.type !== 'loading'),
-        analysisTurn
-      ]);
-      
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
-      setError(errorMessage);
-      // Remove loading bubble on error
-      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
-      console.error("Error continuing conversation:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEditLastReply = async (newContent: string) => {
-    console.log("Editing last reply:", newContent);
-    
-    setError(null);
-    setIsLoading(true);
+        content: '', // Will be replaced when analysis completes
+        timestamp: Date.now(),
+        isLoading: true
+      }
+    ];
+    setConversationHistory(updatedHistory);
     
     try {
-      // Find the last user reply and update it - using reverse and findIndex for compatibility
-      const updatedHistory = [...conversationHistory];
-      const reversedHistory = [...updatedHistory].reverse();
-      const lastReplyIndexFromEnd = reversedHistory.findIndex(turn => turn.type === 'their_reply');
+      const result = await continueCoaching(updatedHistory);
+      console.log("Coaching continuation completed successfully");
       
-      if (lastReplyIndexFromEnd !== -1) {
-        const lastReplyIndex = updatedHistory.length - 1 - lastReplyIndexFromEnd;
-        
-        updatedHistory[lastReplyIndex] = {
-          ...updatedHistory[lastReplyIndex],
-          content: newContent,
-          timestamp: new Date()
-        };
-        
-        // Remove any AI analysis that came after this reply and add loading bubble
-        const historyUpToReply = updatedHistory.slice(0, lastReplyIndex + 1);
-        const loadingTurn: ConversationTurn = {
-          type: 'loading',
-          content: 'Thinking...',
-          timestamp: new Date()
-        };
-        
-        setConversationHistory([...historyUpToReply, loadingTurn]);
-        
-        // Get new analysis with updated history
-        const result = await continueCoaching(historyUpToReply);
-        
-        // Replace loading bubble with new AI analysis
-        const analysisTurn: ConversationTurn = {
-          type: 'ai_analysis',
-          content: result.otherPerspective,
-          timestamp: new Date()
-        };
-        
-        setConversationHistory([...historyUpToReply, analysisTurn]);
-      }
+      // Replace loading bubble with actual analysis
+      const completedConversation = updatedHistory.map((turn, index) => {
+        if (index === updatedHistory.length - 1 && turn.isLoading) {
+          return {
+            ...turn,
+            content: result.empathyAnalysis || result.otherPerspective || 'Analysis completed',
+            isLoading: false,
+            fullAnalysis: result
+          };
+        }
+        return turn;
+      });
       
+      setConversationHistory(completedConversation);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
+      console.error("Coaching continuation failed:", e);
+      
       // Remove loading bubble on error
-      setConversationHistory(prev => prev.filter(turn => turn.type !== 'loading'));
-      console.error("Error editing conversation:", e);
+      const historyWithoutLoading = updatedHistory.slice(0, -1);
+      setConversationHistory(historyWithoutLoading);
     } finally {
-      setIsLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
-  const isConversationStarted = conversationHistory.length > 0;
-  
-  const getLastUserReplyIndex = () => {
-    const reversedHistory = [...conversationHistory].reverse();
-    const lastReplyIndexFromEnd = reversedHistory.findIndex(turn => turn.type === 'their_reply');
-    return lastReplyIndexFromEnd !== -1 ? conversationHistory.length - 1 - lastReplyIndexFromEnd : -1;
+  const handleEditMessage = (index: number, newContent: string) => {
+    console.log("Editing message at index:", index, "New content:", newContent);
+    
+    const updatedHistory = [...conversationHistory];
+    updatedHistory[index] = {
+      ...updatedHistory[index],
+      content: newContent
+    };
+    
+    // Remove all subsequent messages after the edited one
+    const truncatedHistory = updatedHistory.slice(0, index + 1);
+    setConversationHistory(truncatedHistory);
+    
+    console.log("Updated conversation history after edit");
   };
 
+  const renderConversationTurn = (turn: ConversationTurn, index: number) => {
+    switch (turn.type) {
+      case 'initial_problem':
+        return (
+          <div key={index} className="mb-6">
+            <div className="text-slate-500 text-sm mb-1">
+              You started the conversation...
+            </div>
+            <EditableMessage
+              content={turn.content}
+              onEdit={(newContent) => handleEditMessage(index, newContent)}
+              isLastUserMessage={index === conversationHistory.length - 1}
+            />
+          </div>
+        );
+      case 'ai_analysis':
+        return (
+          <div key={index} className="mb-6">
+            <div className="text-blue-500 text-sm mb-1">
+              ECHO analyzed the situation...
+            </div>
+            {turn.isLoading ? (
+              <LoadingBubble />
+            ) : (
+              <CoachAnalysis analysis={turn.fullAnalysis!} />
+            )}
+          </div>
+        );
+      case 'their_reply':
+        return (
+          <div key={index} className="mb-6">
+            <div className="text-green-500 text-sm mb-1">
+              They replied...
+            </div>
+            <div className="text-gray-700 whitespace-pre-wrap leading-relaxed bg-green-50/50 rounded-lg p-4">
+              {turn.content}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const hasInitialProblem = conversationHistory.some(turn => turn.type === 'initial_problem');
+  const lastTurnType = conversationHistory.length > 0 ? conversationHistory[conversationHistory.length - 1].type : null;
+  const canContinue = lastTurnType === 'ai_analysis' && !isAnalyzing;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <StartNewConversationFab 
-        onStartNew={handleStartNewConversation}
-        isVisible={isConversationStarted}
-      />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <header className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl mb-6 shadow-lg">
-              <span className="text-3xl font-bold text-white">E</span>
-            </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent mb-4">
-              ECHO
-            </h1>
-            <p className="text-xl text-slate-600 mb-2">
-              AI Communication Coach
-            </p>
-            <p className="text-sm text-slate-500 max-w-2xl mx-auto leading-relaxed">
-              Turn-by-turn coaching for difficult conversations. Start with your conflict, then paste their replies to get tactical guidance.
-            </p>
-          </header>
-          
-          {!isConversationStarted ? (
-            <ConflictInput onAnalyze={handleInitialAnalysis} isAnalyzing={isLoading} />
-          ) : (
-            <div className="space-y-8">
-              {/* Conversation Thread */}
-              <div className="space-y-8">
-                {conversationHistory.map((turn, index) => (
-                  <div key={index}>
-                    {turn.type === 'initial_problem' && (
-                      <div className="flex justify-end mb-6">
-                        <div className="max-w-3xl bg-blue-500 text-white rounded-2xl rounded-br-sm px-6 py-4 shadow-lg">
-                          <h3 className="text-sm font-semibold text-blue-100 mb-2 uppercase tracking-wide">Your Initial Conflict</h3>
-                          <div className="text-white whitespace-pre-wrap leading-relaxed">
-                            {turn.content}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {turn.type === 'ai_analysis' && (
-                      <div className="flex justify-start mb-6">
-                        <div className="max-w-3xl">
-                          <CoachAnalysis analysis={{ otherPerspective: turn.content }} />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {turn.type === 'loading' && (
-                      <div className="flex justify-start mb-6">
-                        <div className="max-w-3xl">
-                          <LoadingBubble />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {turn.type === 'their_reply' && (
-                      <div className="flex justify-end mb-6">
-                        <div className="max-w-3xl bg-amber-50 border border-amber-200 shadow-lg rounded-2xl rounded-br-sm p-6">
-                          <h3 className="text-sm font-semibold text-amber-800 mb-3 uppercase tracking-wide">Their Reply</h3>
-                          <EditableMessage
-                            content={turn.content}
-                            onEdit={handleEditLastReply}
-                            isLastUserMessage={index === getLastUserReplyIndex()}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Continue Input - only show if conversation started and not currently loading */}
-              {!isLoading && (
-                <ContinueInput 
-                  onContinue={handleContinueConversation} 
-                  isAnalyzing={isLoading}
-                />
-              )}
-            </div>
-          )}
-          
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-6">
-              <p style={{color: 'red'}} className="text-sm">
-                <strong>Error:</strong> {error}
-              </p>
-            </div>
-          )}
-        </div>
+    <div className="container mx-auto p-8 max-w-3xl">
+      <StartNewConversationFab onStartNew={startNewConversation} isVisible={showNewConversationFab} />
+      <h1 className="text-4xl font-bold text-center text-slate-800 mb-8">
+        ECHO: Your AI Communication Coach
+      </h1>
+
+      {/* Conversation History */}
+      <div className="space-y-6">
+        {conversationHistory.map((turn, index) => (
+          renderConversationTurn(turn, index)
+        ))}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p style={{ color: 'red' }} className="text-sm">
+            <strong>Error:</strong> {error}
+          </p>
+        </div>
+      )}
+
+      {/* Initial Conflict Input or Continue Input */}
+      {!hasInitialProblem ? (
+        <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+      ) : canContinue ? (
+        <ContinueInput onContinue={handleContinueConversation} isAnalyzing={isAnalyzing} />
+      ) : null}
     </div>
   );
 };
