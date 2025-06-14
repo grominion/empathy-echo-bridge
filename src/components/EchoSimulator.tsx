@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ConflictInput } from './ConflictInput';
-import { EmpathyAnalysis } from './EmpathyAnalysis';
 import { analyzeConflict } from '../utils/empathyAnalyzer';
 
 export interface AnalysisResult {
@@ -15,14 +15,14 @@ export interface AnalysisResult {
 }
 
 export const EchoSimulator: React.FC = () => {
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const navigate = useNavigate();
 
   const handleAnalyze = async (conflictDescription: string) => {
     setIsAnalyzing(true);
     try {
       const result = await analyzeConflict(conflictDescription);
-      setAnalysis(result);
+      navigate('/result', { state: { analysis: result } });
     } catch (error) {
       console.error('Analysis failed:', error);
     } finally {
@@ -30,17 +30,9 @@ export const EchoSimulator: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    setAnalysis(null);
-  };
-
   return (
     <div className="space-y-8">
-      {!analysis ? (
-        <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
-      ) : (
-        <EmpathyAnalysis analysis={analysis} onReset={handleReset} />
-      )}
+      <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
     </div>
   );
 };

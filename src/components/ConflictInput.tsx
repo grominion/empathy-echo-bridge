@@ -76,7 +76,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({ onAnalyze, isAnaly
           ) : (
             <>
               <Brain className="w-5 h-5 mr-2" />
-              Generate Empathy Analysis
+              Listen to the Echo
             </>
           )}
         </Button>
