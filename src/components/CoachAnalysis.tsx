@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Target, AlertTriangle, Users, TrendingUp, Brain, Zap, Shield, CheckCircle } from 'lucide-react';
-import { AnalysisResult } from '@/pages/Conversation';
+import { AnalysisResult, DevilsAdvocateAttack } from '@/pages/Conversation';
 
 interface CoachAnalysisProps {
   analysis: AnalysisResult;
@@ -37,108 +37,68 @@ export const CoachAnalysis: React.FC<CoachAnalysisProps> = ({ analysis }) => {
     });
   };
 
-  // Helper function to parse and render Devil's Advocate analysis as cards
-  const renderDevilsAdvocateCards = (text: string) => {
-    if (!text) return null;
-
-    // Split the text by lines and parse argument/counter-strategy pairs
-    const lines = text.split('\n').filter(line => line.trim());
-    const cards = [];
-    let currentCard = null;
-
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      
-      // Check if this line starts a new argument (looks for bullet points or bold formatting)
-      if (trimmedLine.match(/^[-*•]\s*\*\*/) || trimmedLine.match(/^\*\*[^*]+\*\*/)) {
-        // If we have a current card, save it
-        if (currentCard) {
-          cards.push(currentCard);
-        }
-        
-        // Start a new card
-        const titleMatch = trimmedLine.match(/\*\*([^*]+)\*\*/);
-        const title = titleMatch ? titleMatch[1] : trimmedLine.replace(/^[-*•]\s*/, '');
-        
-        currentCard = {
-          title: title,
-          quote: '',
-          counterStrategy: ''
-        };
-      } else if (trimmedLine.match(/^[-*•]\s*\*\*Counter-Strategy:\*\*/)) {
-        // This is the counter-strategy section
-        if (currentCard) {
-          const strategyText = trimmedLine.replace(/^[-*•]\s*\*\*Counter-Strategy:\*\*\s*/, '');
-          currentCard.counterStrategy = strategyText;
-        }
-      } else if (currentCard && !currentCard.counterStrategy && trimmedLine.length > 0) {
-        // This might be a quote or additional description for the current argument
-        if (trimmedLine.startsWith('"') || trimmedLine.includes('"')) {
-          currentCard.quote = trimmedLine.replace(/^[-*•]\s*/, '');
-        }
-      } else if (currentCard && currentCard.counterStrategy === '' && trimmedLine.length > 0) {
-        // Additional content for the counter-strategy
-        const cleanLine = trimmedLine.replace(/^[-*•]\s*/, '');
-        if (cleanLine.toLowerCase().includes('counter') || cleanLine.toLowerCase().includes('strategy') || cleanLine.toLowerCase().includes('response')) {
-          currentCard.counterStrategy = cleanLine.replace(/\*\*Counter-Strategy:\*\*\s*/, '');
-        }
-      }
-    }
-
-    // Don't forget the last card
-    if (currentCard) {
-      cards.push(currentCard);
-    }
-
-    // If we couldn't parse cards properly, fall back to the original formatting
-    if (cards.length === 0) {
+  // Helper function to render Devil's Advocate analysis as structured cards
+  const renderDevilsAdvocateCards = (data: DevilsAdvocateAttack[] | string) => {
+    // Handle backward compatibility - if it's still a string, try to parse it
+    if (typeof data === 'string') {
+      // If parsing old format fails, show error message
       return (
-        <div className="prose prose-slate max-w-none text-slate-700">
-          {renderAnalysisWithBoldTitles(text)}
+        <div className="text-slate-500 italic">
+          Unable to display Devil's Advocate analysis. Please try regenerating the analysis.
         </div>
       );
     }
 
-    return (
-      <div className="space-y-4">
-        {cards.map((card, index) => (
-          <div 
-            key={index}
-            className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
-          >
-            {/* Attack Title with Icon */}
-            <div className="flex items-start gap-3 mb-3">
-              <div className="flex-shrink-0 mt-1">
-                <Shield className="w-5 h-5 text-red-500" />
+    // Handle the new structured array format
+    if (Array.isArray(data) && data.length > 0) {
+      return (
+        <div className="space-y-4">
+          {data.map((attack, index) => (
+            <div 
+              key={index}
+              className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+            >
+              {/* Attack Title with Icon */}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-shrink-0 mt-1">
+                  <Shield className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-red-800 text-lg mb-2">
+                    {attack.attack_type}
+                  </h4>
+                  {attack.example_quote && (
+                    <blockquote className="italic text-gray-600 border-l-4 border-red-200 pl-4 mb-3">
+                      "{attack.example_quote}"
+                    </blockquote>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-red-800 text-lg mb-2">
-                  {card.title}
-                </h4>
-                {card.quote && (
-                  <blockquote className="italic text-gray-600 border-l-4 border-red-200 pl-4 mb-3">
-                    {card.quote}
-                  </blockquote>
-                )}
-              </div>
-            </div>
 
-            {/* Counter-Strategy */}
-            {card.counterStrategy && (
-              <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold text-green-800 mb-1">Your Response:</div>
-                    <div className="text-green-700 leading-relaxed">
-                      {card.counterStrategy}
+              {/* Counter-Strategy */}
+              {attack.counter_strategy && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-green-800 mb-1">Your Response:</div>
+                      <div className="text-green-700 leading-relaxed">
+                        {attack.counter_strategy}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Fallback if no data
+    return (
+      <div className="text-slate-500 italic">
+        Devil's advocate analysis not available
       </div>
     );
   };

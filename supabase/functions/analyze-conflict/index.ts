@@ -132,14 +132,35 @@ Now, provide your analysis using these exact three Markdown headings and nothing
           body: JSON.stringify({
             model: 'gpt-4o',
             max_tokens: 2048,
+            response_format: { type: "json_object" },
             messages: [
               {
+                role: 'system',
+                content: 'You must respond with valid JSON only. Your entire response MUST be a valid JSON object with an "attacks" key containing an array of objects, and nothing else.'
+              },
+              {
                 role: 'user',
-                content: `You are a cynical Devil's Advocate. Your entire response must be in the exact same language as the user's text. Read this conflict: ${conflictDescription}. Prepare the user for the worst possible responses. For each unfair, manipulative, or irrational argument you list, you MUST immediately follow it with a concise, tactical 'Counter-Strategy' on how to neutralize the attack without escalating.
+                content: `Your entire response must be in the same language as the user's text. The user is facing a conflict and needs to prepare for manipulative arguments.
 
-Example Output Format:
-- **Appeal to Authority:** "I'm older, so I know better."
-- **Counter-Strategy:** Acknowledge their experience but gently pivot back to your feelings. "I respect your experience, and I'd like to share how this situation feels from my perspective."`
+The user's conflict is: "${conflictDescription}"
+
+Generate a JSON object with an "attacks" key containing an array of objects, where each object has these three keys: "attack_type", "example_quote", and "counter_strategy".
+
+Example of the required JSON format:
+{
+  "attacks": [
+    {
+      "attack_type": "Personal Attack",
+      "example_quote": "You're just being emotional and not thinking logically.",
+      "counter_strategy": "Acknowledge their point but re-center on your feelings. 'I understand you see it that way, but for me, this is an emotional issue and my feelings are valid.'"
+    },
+    {
+      "attack_type": "Guilt-Tripping", 
+      "example_quote": "After everything I've done for you, you're questioning my judgment?",
+      "counter_strategy": "Set a boundary without being aggressive. 'I'm grateful for everything, and this conversation isn't about that. It's about finding a solution to this specific issue.'"
+    }
+  ]
+}`
               }
             ]
           })
@@ -151,7 +172,17 @@ Example Output Format:
         }
 
         const data = await response.json()
-        return data.choices[0].message.content
+        const rawContent = data.choices[0].message.content
+        
+        // Parse the JSON response from OpenAI
+        try {
+          const parsedOpenAIResponse = JSON.parse(rawContent)
+          return parsedOpenAIResponse.attacks || []
+        } catch (parseError) {
+          console.error('Failed to parse OpenAI JSON response:', parseError)
+          console.error('Raw response:', rawContent)
+          return `Error parsing GPT-4 response: ${parseError.message}`
+        }
       } catch (error) {
         console.error('OpenAI API failed:', error)
         return `Error calling GPT-4: ${error.message}`

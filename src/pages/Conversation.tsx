@@ -13,10 +13,16 @@ import { CoachAnalysis } from '@/components/CoachAnalysis';
 import { LoadingBubble } from '@/components/LoadingBubble';
 import { StartNewConversationFab } from '@/components/StartNewConversationFab';
 
+export interface DevilsAdvocateAttack {
+  attack_type: string;
+  example_quote: string;
+  counter_strategy: string;
+}
+
 export interface AnalysisResult {
   empathyAnalysis?: string;
   strategyAnalysis?: string;
-  devilsAdvocateAnalysis?: string;
+  devilsAdvocateAnalysis?: DevilsAdvocateAttack[] | string;
   wisdomOfCrowd?: {
     text: string;
     count: number;
