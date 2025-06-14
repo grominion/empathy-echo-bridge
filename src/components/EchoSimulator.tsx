@@ -20,6 +20,9 @@ export const EchoSimulator: React.FC = () => {
   const navigate = useNavigate();
 
   const handleAnalyze = async (conflictDescription: string) => {
+    console.log("Button Clicked!");
+    console.log("Conflict description received:", conflictDescription);
+    
     setError(null);
     setIsLoading(true);
     
@@ -34,6 +37,8 @@ export const EchoSimulator: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  console.log("Component Rendered");
 
   return (
     <div className="space-y-8">

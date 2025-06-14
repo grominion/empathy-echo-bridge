@@ -14,12 +14,20 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({ onAnalyze, isAnaly
   const [conflictDescription, setConflictDescription] = useState('');
 
   const handleSubmit = () => {
+    console.log("handleSubmit called!");
+    console.log("Current conflict description:", conflictDescription);
+    
     if (conflictDescription.trim()) {
+      console.log("About to call onAnalyze with:", conflictDescription.trim());
       onAnalyze(conflictDescription.trim());
+    } else {
+      console.log("Conflict description is empty, not calling onAnalyze");
     }
   };
 
   const isValid = conflictDescription.trim().length > 20;
+
+  console.log("ConflictInput rendered, isAnalyzing:", isAnalyzing, "isValid:", isValid);
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
