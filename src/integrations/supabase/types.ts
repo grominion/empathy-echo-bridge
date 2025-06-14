@@ -9,7 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      emotional_bridges: {
+        Row: {
+          bridge_text: string
+          created_at: string
+          id: string
+          occurrence_count: number
+          updated_at: string
+        }
+        Insert: {
+          bridge_text: string
+          created_at?: string
+          id?: string
+          occurrence_count?: number
+          updated_at?: string
+        }
+        Update: {
+          bridge_text?: string
+          created_at?: string
+          id?: string
+          occurrence_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
