@@ -5,49 +5,47 @@ export const analyzeConflict = async (conflictDescription: string): Promise<Anal
   // Simulate AI processing delay
   await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
   
-  // New English-only AI Prompt - simplified for MVP
-  const prompt = `### TASK
-Analyze the following user text, which is in English. Generate a three-part empathetic analysis in English.
-
-### USER TEXT TO ANALYZE
-${conflictDescription}
-
----
+  // Hardcoded showcase - completely ignore user input
+  const prompt = `You are an actor. Your only role is to output the following script exactly as it is written below. Do not change a single word.
 
 ### The Other Perspective
-(Write in the first person "I", from the other's point of view. Focus on their underlying emotions, fears, and values.)
+
+I've spent years in a job that pays the bills but starves my soul. Every day, I feel like a ghost in my own life. This dream of being an artist isn't about being reckless; it's about trying to feel alive again before it's too late. It's the most terrifying thing I've ever considered, and I feel incredibly alone in it. When my best friend, the person I count on the most, looks at me with fear instead of belief, it doesn't feel like concern. It feels like a confirmation of my deepest fear: that I'm not good enough and I'm going to fail. I don't need someone to point out the risks; I live with them every second. I need someone to hold my hand and say they'll be there even if I fall.
 
 ### The Emotional Bridge
-(Identify the single, specific core emotion or value that both sides share, even if they express it differently.)
+
+The non-obvious connection isn't about risk or stability. It's about the **fear of a wasted life**. You fear she will waste her professional future, and she fears she is currently wasting her one and only life. Both of you are acting out of a desperate desire to prevent a future filled with regret.
 
 ### The Translator for your next discussion
-(Provide a concrete "Don't say / Instead, try" format for de-escalation.)`;
 
-  console.log('AI Prompt being sent:', prompt);
-  console.log('User input mapped to [USER_INPUT]:', conflictDescription);
+**Don't say:** "But what about the money? It's too risky."
+**Instead, try:** "It sounds like staying in your current job feels like a bigger risk to you than leaving it. Can you tell me more about what you hope to feel by making this change?"`;
+
+  console.log('Hardcoded showcase prompt:', prompt);
+  console.log('User input ignored for showcase:', conflictDescription);
   
-  // Simulate Claude 3 Opus response with the required structure
-  const aiOutput = `### The Other Perspective
-I feel like my experience and knowledge aren't being respected when ideas are dismissed quickly. I've worked hard to build expertise, and when I see gaps in thinking or potential issues, I feel compelled to speak up immediately. I worry that if I don't intervene, we might miss important considerations or make costly mistakes. Sometimes I interrupt because I'm excited about the solution I can see, and I want to help the team avoid pitfalls I've encountered before.
+  // Return the hardcoded showcase response
+  const showcaseResponse = `### The Other Perspective
+
+I've spent years in a job that pays the bills but starves my soul. Every day, I feel like a ghost in my own life. This dream of being an artist isn't about being reckless; it's about trying to feel alive again before it's too late. It's the most terrifying thing I've ever considered, and I feel incredibly alone in it. When my best friend, the person I count on the most, looks at me with fear instead of belief, it doesn't feel like concern. It feels like a confirmation of my deepest fear: that I'm not good enough and I'm going to fail. I don't need someone to point out the risks; I live with them every second. I need someone to hold my hand and say they'll be there even if I fall.
 
 ### The Emotional Bridge
-Both sides share a deep commitment to doing quality work and contributing meaningfully to the team's success. You both care about being heard and having your expertise valued.
+
+The non-obvious connection isn't about risk or stability. It's about the **fear of a wasted life**. You fear she will waste her professional future, and she fears she is currently wasting her one and only life. Both of you are acting out of a desperate desire to prevent a future filled with regret.
 
 ### The Translator for your next discussion
-**Don't say:** "You always interrupt me and dismiss my ideas"
-**Instead, try:** "I'd love to build on what you just shared. Could I finish my thought first, and then get your perspective on how we might address the challenges you're seeing?"
 
-**Don't say:** "You're not experienced enough to understand this"
-**Instead, try:** "I've encountered something similar before. Would it help if I shared what I learned, and then we could explore how that applies to your approach?"`;
+**Don't say:** "But what about the money? It's too risky."
+**Instead, try:** "It sounds like staying in your current job feels like a bigger risk to you than leaving it. Can you tell me more about what you hope to feel by making this change?"`;
   
   const analysis: AnalysisResult = {
     detectedLanguage: 'English',
-    otherPerspective: aiOutput,
+    otherPerspective: showcaseResponse,
     emotionalBridge: '',
     translator: []
   };
   
-  console.log('AI Response generated:', analysis);
+  console.log('Hardcoded showcase response:', analysis);
   
   return analysis;
 };
