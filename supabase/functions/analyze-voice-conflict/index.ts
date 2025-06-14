@@ -295,9 +295,12 @@ Example of the required JSON format:
 
   } catch (error) {
     console.error('Error in analyze-voice-conflict function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: `Voice analysis failed: ${error.message}` }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
