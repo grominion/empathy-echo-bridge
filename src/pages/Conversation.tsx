@@ -29,6 +29,15 @@ export interface AnalysisResult {
     totalAnalyzed: number;
     percentage: number;
   };
+  voiceMetadata?: {
+    transcribedText: string;
+    sentimentData: {
+      sentiment: string;
+      confidence: number;
+      emotions: Array<{ emotion: string; confidence: number }>;
+    };
+    processingSource: string;
+  };
   otherPerspective?: string; // Keep for backward compatibility
   emotionalBridge?: string;
   translator?: Array<{

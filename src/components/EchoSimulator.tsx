@@ -27,7 +27,7 @@ export const EchoSimulator: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const result = await analyzeConflict(conflictText, false); // Pass false for text input
+      const result = await analyzeConflict(conflictText, false);
       navigate('/result', { state: { analysis: result } });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
@@ -38,11 +38,35 @@ export const EchoSimulator: React.FC = () => {
     }
   };
 
+  const handleVoiceAnalyze = async (audioData: string) => {
+    console.log("Voice Conflict Data Received!");
+    console.log("Audio data length:", audioData.length);
+    
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      const { analyzeVoiceConflict } = await import('../utils/empathyAnalyzer');
+      const result = await analyzeVoiceConflict(audioData);
+      navigate('/result', { state: { analysis: result } });
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      setError(errorMessage);
+      console.error("Voice analysis error:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   console.log("EchoSimulator Component Rendered");
 
   return (
     <div className="space-y-8">
-      <ConflictInput onAnalyze={handleAnalyze} isAnalyzing={isLoading} />
+      <ConflictInput 
+        onAnalyze={handleAnalyze} 
+        onVoiceAnalyze={handleVoiceAnalyze}
+        isAnalyzing={isLoading} 
+      />
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p style={{color: 'red'}} className="text-sm">

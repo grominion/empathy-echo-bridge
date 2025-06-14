@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ConversationTurn, AnalysisResult } from "@/pages/Conversation";
 
@@ -53,6 +52,63 @@ export async function analyzeConflict(input: string, isAudio: boolean = false): 
 
   } catch (error) {
     console.error("Error in analyzeConflict:", error);
+    throw error;
+  }
+}
+
+export async function analyzeVoiceConflict(audioData: string): Promise<AnalysisResult> {
+  console.log("Calling analyze-voice-conflict edge function...");
+  
+  try {
+    const body = { audioData };
+
+    const { data, error } = await supabase.functions.invoke('analyze-voice-conflict', {
+      body
+    });
+
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw new Error(`Voice analysis failed: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error("No data returned from voice analysis function");
+    }
+
+    // Check if the response contains an error
+    if (data.error) {
+      console.error("Backend error:", data.error);
+      throw new Error(data.error);
+    }
+
+    // Extract the analyses from the response
+    const { empathyAnalysis, strategyAnalysis, devilsAdvocateAnalysis, wisdomOfCrowd, voiceMetadata } = data;
+    
+    if (!empathyAnalysis && !strategyAnalysis && !devilsAdvocateAnalysis) {
+      throw new Error("No analysis data returned from voice analysis");
+    }
+
+    console.log("Voice analysis completed successfully");
+    console.log("Voice metadata:", voiceMetadata);
+    
+    // Return the analysis result with voice-specific data
+    const result: AnalysisResult = {
+      empathyAnalysis,
+      strategyAnalysis, 
+      devilsAdvocateAnalysis,
+      detectedLanguage: 'en',
+      voiceMetadata
+    };
+
+    // Add wisdom of crowd data if available
+    if (wisdomOfCrowd) {
+      result.wisdomOfCrowd = wisdomOfCrowd;
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error("Error in analyzeVoiceConflict:", error);
     throw error;
   }
 }

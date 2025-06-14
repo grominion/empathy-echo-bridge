@@ -3,3 +3,6 @@ project_id = "tzvinmtqaasxfnpznpux"
 
 [functions.analyze-conflict]
 verify_jwt = false
+
+[functions.analyze-voice-conflict]
+verify_jwt = false
