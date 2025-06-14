@@ -19,15 +19,15 @@ export const EchoSimulator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAnalyze = async (audioData: string) => {
-    console.log("Audio Recording Received!");
-    console.log("Audio data length:", audioData.length);
+  const handleAnalyze = async (conflictText: string) => {
+    console.log("Text Conflict Description Received!");
+    console.log("Text length:", conflictText.length);
     
     setError(null);
     setIsLoading(true);
     
     try {
-      const result = await analyzeConflict(audioData, true); // Pass true for audio input
+      const result = await analyzeConflict(conflictText, false); // Pass false for text input
       navigate('/result', { state: { analysis: result } });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';

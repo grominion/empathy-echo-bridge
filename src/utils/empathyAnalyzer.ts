@@ -6,9 +6,7 @@ export async function analyzeConflict(input: string, isAudio: boolean = false): 
   console.log("Calling analyze-conflict edge function...");
   
   try {
-    const body = isAudio 
-      ? { audioData: input }
-      : { conflictDescription: input };
+    const body = { conflictDescription: input };
 
     const { data, error } = await supabase.functions.invoke('analyze-conflict', {
       body
