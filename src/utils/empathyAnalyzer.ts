@@ -25,17 +25,20 @@ export async function analyzeConflict(conflictDescription: string): Promise<Anal
       throw new Error(data.error);
     }
 
-    // Extract the analysis from the response
-    const analysis = data.analysis;
-    if (!analysis) {
-      throw new Error("No analysis data returned from backend");
+    // Extract the three analyses from the response
+    const { claudeAnalysis, googleAnalysis, openaiAnalysis } = data;
+    
+    if (!claudeAnalysis && !googleAnalysis && !openaiAnalysis) {
+      throw new Error("No analysis data returned from any API");
     }
 
-    console.log("Analysis completed successfully");
+    console.log("Multi-AI analysis completed successfully");
     
-    // Return the analysis result
+    // Return the analysis result with all three analyses
     return {
-      empathyAnalysis: analysis,
+      empathyAnalysis: claudeAnalysis,
+      strategyAnalysis: googleAnalysis, 
+      devilsAdvocateAnalysis: openaiAnalysis,
       detectedLanguage: 'en' // Default to English for now
     };
 
