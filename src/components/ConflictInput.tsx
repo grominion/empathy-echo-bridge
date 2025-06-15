@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -95,11 +96,42 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
           Tell ECHO About Your Conflict
         </CardTitle>
         <p className="text-slate-600 mt-2">
-          Use your voice or type below for personalized analysis
+          Describe your situation below or use voice for deeper analysis
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Centered Mic Button */}
+        {/* Text Input (Primary) */}
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Describe your conflict situation here... What happened? How are you feeling? What's at stake?"
+            value={conflictText}
+            onChange={(e) => setConflictText(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="min-h-[120px] text-base leading-relaxed resize-none focus:ring-2 focus:ring-blue-500"
+            disabled={isAnalyzing}
+          />
+          <Button
+            onClick={handleSubmit}
+            disabled={!conflictText.trim() || isAnalyzing}
+            className="w-full h-12 text-lg font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Analyzing Conflict...
+              </>
+            ) : (
+              'Analyze My Conflict'
+            )}
+          </Button>
+        </div>
+
+        {/* "OR" separator */}
+        <div className="text-center my-2">
+          <span className="inline-block px-3 py-0.5 bg-slate-100 rounded-full text-slate-500 text-xs font-medium select-none">- OR -</span>
+        </div>
+
+        {/* Voice Input (Secondary) */}
         <div className="flex flex-col items-center">
           <Button
             onClick={isRecording ? handleStopRecording : handleStartRecording}
@@ -127,38 +159,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
           </div>
         </div>
 
-        {/* "OR" separator */}
-        <div className="text-center my-2">
-          <span className="inline-block px-3 py-0.5 bg-slate-100 rounded-full text-slate-500 text-xs font-medium select-none">- OR -</span>
-        </div>
-
-        {/* Text Input */}
-        <div className="space-y-4">
-          <Textarea
-            placeholder="Describe your conflict situation here... What happened? How are you feeling? What's at stake?"
-            value={conflictText}
-            onChange={(e) => setConflictText(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="min-h-[120px] text-base leading-relaxed resize-none focus:ring-2 focus:ring-blue-500"
-            disabled={isAnalyzing}
-          />
-          <Button
-            onClick={handleSubmit}
-            disabled={!conflictText.trim() || isAnalyzing}
-            className="w-full h-12 text-lg font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Analyzing Conflict...
-              </>
-            ) : (
-              'Analyze My Conflict'
-            )}
-          </Button>
-        </div>
-
-        {/* What ECHO Will Analyze (unchanged) */}
+        {/* What ECHO Will Analyze */}
         <div className="bg-slate-50 rounded-lg p-4 space-y-2">
           <h4 className="font-medium text-slate-700 flex items-center gap-2">
             <Brain className="w-4 h-4" />
