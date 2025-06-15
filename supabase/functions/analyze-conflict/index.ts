@@ -68,7 +68,12 @@ Now, provide your analysis using these exact three Markdown headings and nothing
 
 ### The Emotional Bridge
 
-### The Translator for your next discussion`
+### The Translator for your next discussion
+
+For the Translator section, you MUST provide AT LEAST THREE distinct suggestions for different angles of conversation. Format each one on a new line using this exact structure: 
+1. **Don't say:** [phrase] / **Instead, try:** [phrase]
+2. **Don't say:** [phrase] / **Instead, try:** [phrase]
+3. **Don't say:** [phrase] / **Instead, try:** [phrase]`
               }
             ]
           })
