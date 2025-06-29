@@ -52,7 +52,7 @@ const Admin: React.FC = () => {
   };
 
   const saveLLMConfig = async () => {
-    if (!editingConfig.name || !editingConfig.provider || !editingConfig.model) {
+    if (!editingConfig.name || !editingConfig.provider || !editingConfig.model || !editingConfig.api_endpoint) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -63,16 +63,27 @@ const Admin: React.FC = () => {
 
     setIsLoading(true);
     try {
+      const configData = {
+        name: editingConfig.name,
+        provider: editingConfig.provider,
+        model: editingConfig.model,
+        api_endpoint: editingConfig.api_endpoint,
+        max_tokens: editingConfig.max_tokens || 2048,
+        temperature: editingConfig.temperature || 0.7,
+        system_prompt: editingConfig.system_prompt || '',
+        is_active: editingConfig.is_active || false
+      };
+
       if (editingConfig.id) {
         const { error } = await supabase
           .from('llm_configurations')
-          .update(editingConfig)
+          .update(configData)
           .eq('id', editingConfig.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('llm_configurations')
-          .insert(editingConfig);
+          .insert(configData);
         if (error) throw error;
       }
 
