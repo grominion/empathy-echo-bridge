@@ -1,8 +1,29 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ConversationTurn, AnalysisResult } from "@/pages/Conversation";
+import { callDynamicLLM, saveConversationHistory } from "./dynamicLLMAnalyzer";
 
 export async function analyzeConflict(input: string, isAudio: boolean = false): Promise<AnalysisResult> {
-  console.log("Calling analyze-conflict edge function...");
+  console.log("Starting conflict analysis with dynamic LLM...");
+  
+  try {
+    // Utiliser le nouveau système LLM dynamique
+    const result = await callDynamicLLM(input);
+    
+    // Sauvegarder dans l'historique
+    await saveConversationHistory(input, result);
+    
+    return result;
+
+  } catch (error) {
+    console.error("Error in analyzeConflict:", error);
+    // Fallback vers l'ancien système si le nouveau échoue
+    return await analyzeConflictFallback(input, isAudio);
+  }
+}
+
+// Garder l'ancien système comme fallback
+async function analyzeConflictFallback(input: string, isAudio: boolean = false): Promise<AnalysisResult> {
+  console.log("Using fallback analysis system...");
   
   try {
     const body = { conflictDescription: input };
@@ -20,30 +41,26 @@ export async function analyzeConflict(input: string, isAudio: boolean = false): 
       throw new Error("No data returned from analysis function");
     }
 
-    // Check if the response contains an error
     if (data.error) {
       console.error("Backend error:", data.error);
       throw new Error(data.error);
     }
 
-    // Extract the three analyses from the response
     const { claudeAnalysis, googleAnalysis, openaiAnalysis, wisdomOfCrowd } = data;
     
     if (!claudeAnalysis && !googleAnalysis && !openaiAnalysis) {
       throw new Error("No analysis data returned from any API");
     }
 
-    console.log("Multi-AI analysis completed successfully");
+    console.log("Fallback multi-AI analysis completed successfully");
     
-    // Return the analysis result with all three analyses and wisdom of crowd
     const result: AnalysisResult = {
       empathyAnalysis: claudeAnalysis,
       strategyAnalysis: googleAnalysis, 
       devilsAdvocateAnalysis: openaiAnalysis,
-      detectedLanguage: 'en' // Default to English for now
+      detectedLanguage: 'en'
     };
 
-    // Add wisdom of crowd data if available
     if (wisdomOfCrowd) {
       result.wisdomOfCrowd = wisdomOfCrowd;
     }
@@ -51,7 +68,7 @@ export async function analyzeConflict(input: string, isAudio: boolean = false): 
     return result;
 
   } catch (error) {
-    console.error("Error in analyzeConflict:", error);
+    console.error("Error in analyzeConflictFallback:", error);
     throw error;
   }
 }
@@ -75,13 +92,11 @@ export async function analyzeVoiceConflict(audioData: string): Promise<AnalysisR
       throw new Error("No data returned from voice analysis function");
     }
 
-    // Check if the response contains an error
     if (data.error) {
       console.error("Backend error:", data.error);
       throw new Error(data.error);
     }
 
-    // Extract the analyses from the response
     const { empathyAnalysis, strategyAnalysis, devilsAdvocateAnalysis, wisdomOfCrowd, voiceMetadata } = data;
     
     if (!empathyAnalysis && !strategyAnalysis && !devilsAdvocateAnalysis) {
@@ -91,7 +106,6 @@ export async function analyzeVoiceConflict(audioData: string): Promise<AnalysisR
     console.log("Voice analysis completed successfully");
     console.log("Voice metadata:", voiceMetadata);
     
-    // Return the analysis result with voice-specific data
     const result: AnalysisResult = {
       empathyAnalysis,
       strategyAnalysis, 
@@ -100,7 +114,6 @@ export async function analyzeVoiceConflict(audioData: string): Promise<AnalysisR
       voiceMetadata
     };
 
-    // Add wisdom of crowd data if available
     if (wisdomOfCrowd) {
       result.wisdomOfCrowd = wisdomOfCrowd;
     }
@@ -114,8 +127,6 @@ export async function analyzeVoiceConflict(audioData: string): Promise<AnalysisR
 }
 
 export async function continueCoaching(conversationHistory: ConversationTurn[]): Promise<AnalysisResult> {
-  // For now, just use the same analysis function
-  // This could be enhanced to provide more context-aware responses
   const lastUserMessage = conversationHistory
     .filter(turn => turn.type === 'initial_problem' || turn.type === 'their_reply')
     .pop();
@@ -124,5 +135,5 @@ export async function continueCoaching(conversationHistory: ConversationTurn[]):
     throw new Error("No user message found to continue coaching");
   }
   
-  return analyzeConflict(lastUserMessage.content, false); // Always use text for continue coaching
+  return analyzeConflict(lastUserMessage.content, false);
 }

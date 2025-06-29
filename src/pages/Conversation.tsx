@@ -12,6 +12,7 @@ import { ContinueInput } from '../components/ContinueInput';
 import { CoachAnalysis } from '@/components/CoachAnalysis';
 import { LoadingBubble } from '@/components/LoadingBubble';
 import { StartNewConversationFab } from '@/components/StartNewConversationFab';
+import { ProgressIndicator, useAnalysisProgress } from '@/components/ProgressIndicator';
 
 export interface DevilsAdvocateAttack {
   attack_type: string;
@@ -60,14 +61,14 @@ const Conversation: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNewConversationFab, setShowNewConversationFab] = useState(false);
+  const { steps, currentStep, nextStep, reset, isComplete } = useAnalysisProgress();
 
   useEffect(() => {
-    // Simulate a delay to show the FAB after the component mounts
     const timer = setTimeout(() => {
       setShowNewConversationFab(true);
     }, 500);
 
-    return () => clearTimeout(timer); // Clear the timer if the component unmounts
+    return () => clearTimeout(timer);
   }, []);
 
   const startNewConversation = useCallback(() => {
@@ -75,20 +76,20 @@ const Conversation: React.FC = () => {
     setConversationHistory([]);
     setError(null);
     setShowNewConversationFab(false);
+    reset();
 
-    // Slight delay before showing the FAB again
     setTimeout(() => {
       setShowNewConversationFab(true);
     }, 500);
-  }, []);
+  }, [reset]);
 
   const handleAnalyze = async (conflictText: string) => {
     console.log("Starting new text analysis...");
     
     setError(null);
     setIsAnalyzing(true);
+    reset();
     
-    // Add loading bubble immediately
     const newConversation: ConversationTurn[] = [
       ...conversationHistory,
       {
@@ -98,7 +99,7 @@ const Conversation: React.FC = () => {
       },
       {
         type: 'ai_analysis',
-        content: '', // Will be replaced when analysis completes
+        content: '',
         timestamp: Date.now(),
         isLoading: true
       }
@@ -106,10 +107,18 @@ const Conversation: React.FC = () => {
     setConversationHistory(newConversation);
     
     try {
-      const result = await analyzeConflict(conflictText, false); // Pass false to indicate text input
+      // Simuler la progression
+      const progressTimer = setInterval(() => {
+        if (!isComplete) {
+          nextStep();
+        }
+      }, 2000);
+
+      const result = await analyzeConflict(conflictText, false);
       console.log("Analysis completed successfully");
       
-      // Replace loading bubble with actual analysis
+      clearInterval(progressTimer);
+      
       const completedConversation = newConversation.map((turn, index) => {
         if (index === newConversation.length - 1 && turn.isLoading) {
           return {
@@ -127,11 +136,10 @@ const Conversation: React.FC = () => {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
       console.error("Analysis failed:", e);
-      
-      // Remove loading bubble on error
       setConversationHistory(conversationHistory);
     } finally {
       setIsAnalyzing(false);
+      reset();
     }
   };
 
@@ -141,17 +149,16 @@ const Conversation: React.FC = () => {
     setError(null);
     setIsAnalyzing(true);
     
-    // Add loading bubble immediately
     const newConversation: ConversationTurn[] = [
       ...conversationHistory,
       {
         type: 'initial_problem',
-        content: audioData, // Store audio data reference
+        content: audioData,
         timestamp: Date.now()
       },
       {
         type: 'ai_analysis',
-        content: '', // Will be replaced when analysis completes
+        content: '',
         timestamp: Date.now(),
         isLoading: true
       }
@@ -159,10 +166,9 @@ const Conversation: React.FC = () => {
     setConversationHistory(newConversation);
     
     try {
-      const result = await analyzeConflict(audioData, true); // Pass true to indicate audio input
+      const result = await analyzeConflict(audioData, true);
       console.log("Analysis completed successfully");
       
-      // Replace loading bubble with actual analysis
       const completedConversation = newConversation.map((turn, index) => {
         if (index === newConversation.length - 1 && turn.isLoading) {
           return {
@@ -180,8 +186,6 @@ const Conversation: React.FC = () => {
       const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
       setError(errorMessage);
       console.error("Voice analysis failed:", e);
-      
-      // Remove loading bubble on error
       setConversationHistory(conversationHistory);
     } finally {
       setIsAnalyzing(false);
@@ -194,7 +198,6 @@ const Conversation: React.FC = () => {
     setError(null);
     setIsAnalyzing(true);
     
-    // Add their reply and loading bubble
     const updatedHistory: ConversationTurn[] = [
       ...conversationHistory,
       {
@@ -204,7 +207,7 @@ const Conversation: React.FC = () => {
       },
       {
         type: 'ai_analysis',
-        content: '', // Will be replaced when analysis completes
+        content: '',
         timestamp: Date.now(),
         isLoading: true
       }
@@ -215,7 +218,6 @@ const Conversation: React.FC = () => {
       const result = await continueCoaching(updatedHistory);
       console.log("Coaching continuation completed successfully");
       
-      // Replace loading bubble with actual analysis
       const completedConversation = updatedHistory.map((turn, index) => {
         if (index === updatedHistory.length - 1 && turn.isLoading) {
           return {
@@ -234,7 +236,6 @@ const Conversation: React.FC = () => {
       setError(errorMessage);
       console.error("Coaching continuation failed:", e);
       
-      // Remove loading bubble on error
       const historyWithoutLoading = updatedHistory.slice(0, -1);
       setConversationHistory(historyWithoutLoading);
     } finally {
@@ -251,7 +252,6 @@ const Conversation: React.FC = () => {
       content: newContent
     };
     
-    // Remove all subsequent messages after the edited one
     const truncatedHistory = updatedHistory.slice(0, index + 1);
     setConversationHistory(truncatedHistory);
     
@@ -274,7 +274,14 @@ const Conversation: React.FC = () => {
         return (
           <div key={index} className="mb-6">
             {turn.isLoading ? (
-              <LoadingBubble />
+              <>
+                <LoadingBubble />
+                {isAnalyzing && (
+                  <div className="mt-4">
+                    <ProgressIndicator steps={steps} currentStep={currentStep} />
+                  </div>
+                )}
+              </>
             ) : (
               <CoachAnalysis analysis={turn.fullAnalysis!} />
             )}
@@ -300,27 +307,24 @@ const Conversation: React.FC = () => {
   return (
     <div className="container mx-auto p-8 max-w-3xl">
       <StartNewConversationFab onStartNew={startNewConversation} isVisible={showNewConversationFab} />
-      <h1 className="text-4xl font-bold text-center text-slate-800 mb-8">
+      <h1 className="text-4xl font-bold text-center text-slate-800 dark:text-slate-200 mb-8">
         ECHO: Your AI Communication Coach
       </h1>
 
-      {/* Conversation History */}
       <div className="space-y-6">
         {conversationHistory.map((turn, index) => (
           renderConversationTurn(turn, index)
         ))}
       </div>
 
-      {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p style={{ color: 'red' }} className="text-sm">
             <strong>Error:</strong> {error}
           </p>
         </div>
       )}
 
-      {/* Initial Conflict Input or Continue Input */}
       {!hasInitialProblem ? (
         <ConflictInput onAnalyze={handleAnalyze} onVoiceAnalyze={handleVoiceAnalyze} isAnalyzing={isAnalyzing} />
       ) : canContinue ? (

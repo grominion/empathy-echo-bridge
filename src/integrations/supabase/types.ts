@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      conversation_history: {
+        Row: {
+          analysis_result: Json | null
+          conflict_description: string
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          llm_config_used: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          analysis_result?: Json | null
+          conflict_description: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          llm_config_used?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          analysis_result?: Json | null
+          conflict_description?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          llm_config_used?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_history_llm_config_used_fkey"
+            columns: ["llm_config_used"]
+            isOneToOne: false
+            referencedRelation: "llm_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emotional_bridges: {
         Row: {
           bridge_text: string
@@ -30,6 +71,81 @@ export type Database = {
           id?: string
           occurrence_count?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      llm_configurations: {
+        Row: {
+          api_endpoint: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_tokens: number | null
+          model: string
+          name: string
+          provider: string
+          system_prompt: string | null
+          temperature: number | null
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model: string
+          name: string
+          provider: string
+          system_prompt?: string | null
+          temperature?: number | null
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model?: string
+          name?: string
+          provider?: string
+          system_prompt?: string | null
+          temperature?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          default_analysis_type: string | null
+          id: string
+          language: string | null
+          notifications_enabled: boolean | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_analysis_type?: string | null
+          id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_analysis_type?: string | null
+          id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
