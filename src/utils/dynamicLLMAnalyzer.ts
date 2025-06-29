@@ -55,7 +55,7 @@ export async function saveConversationHistory(
         user_id: user.user.id,
         title,
         conflict_description: conflictDescription,
-        analysis_result: analysisResult,
+        analysis_result: analysisResult as any,
         llm_config_used: llmConfigId
       });
 

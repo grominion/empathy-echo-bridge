@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +72,7 @@ const Admin: React.FC = () => {
       } else {
         const { error } = await supabase
           .from('llm_configurations')
-          .insert([editingConfig]);
+          .insert(editingConfig);
         if (error) throw error;
       }
 
