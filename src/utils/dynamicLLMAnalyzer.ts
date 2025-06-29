@@ -52,18 +52,18 @@ export async function saveConversationHistory(
 
     const title = conflictDescription.substring(0, 50) + (conflictDescription.length > 50 ? '...' : '');
 
-    // Convertir l'objet AnalysisResult en JSON compatible
-    const analysisJson = {
-      empathyAnalysis: analysisResult.empathyAnalysis,
-      strategyAnalysis: analysisResult.strategyAnalysis,
-      devilsAdvocateAnalysis: analysisResult.devilsAdvocateAnalysis,
-      wisdomOfCrowd: analysisResult.wisdomOfCrowd,
-      voiceMetadata: analysisResult.voiceMetadata,
-      otherPerspective: analysisResult.otherPerspective,
-      emotionalBridge: analysisResult.emotionalBridge,
-      translator: analysisResult.translator,
-      detectedLanguage: analysisResult.detectedLanguage
-    };
+    // Convert AnalysisResult to a JSON-serializable format
+    const analysisJson = JSON.parse(JSON.stringify({
+      empathyAnalysis: analysisResult.empathyAnalysis || null,
+      strategyAnalysis: analysisResult.strategyAnalysis || null,
+      devilsAdvocateAnalysis: analysisResult.devilsAdvocateAnalysis || null,
+      wisdomOfCrowd: analysisResult.wisdomOfCrowd || null,
+      voiceMetadata: analysisResult.voiceMetadata || null,
+      otherPerspective: analysisResult.otherPerspective || null,
+      emotionalBridge: analysisResult.emotionalBridge || null,
+      translator: analysisResult.translator || null,
+      detectedLanguage: analysisResult.detectedLanguage || 'en'
+    }));
 
     const { error } = await supabase
       .from('conversation_history')
