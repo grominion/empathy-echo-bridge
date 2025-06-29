@@ -45,9 +45,25 @@ export async function saveConversationHistory(
 ) {
   try {
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
+    if (!user.user) {
+      console.log("No authenticated user, skipping history save");
+      return;
+    }
 
     const title = conflictDescription.substring(0, 50) + (conflictDescription.length > 50 ? '...' : '');
+
+    // Convertir l'objet AnalysisResult en JSON compatible
+    const analysisJson = {
+      empathyAnalysis: analysisResult.empathyAnalysis,
+      strategyAnalysis: analysisResult.strategyAnalysis,
+      devilsAdvocateAnalysis: analysisResult.devilsAdvocateAnalysis,
+      wisdomOfCrowd: analysisResult.wisdomOfCrowd,
+      voiceMetadata: analysisResult.voiceMetadata,
+      otherPerspective: analysisResult.otherPerspective,
+      emotionalBridge: analysisResult.emotionalBridge,
+      translator: analysisResult.translator,
+      detectedLanguage: analysisResult.detectedLanguage
+    };
 
     const { error } = await supabase
       .from('conversation_history')
@@ -55,14 +71,15 @@ export async function saveConversationHistory(
         user_id: user.user.id,
         title,
         conflict_description: conflictDescription,
-        analysis_result: analysisResult as any,
-        llm_config_used: llmConfigId
+        analysis_result: analysisJson,
+        llm_config_used: llmConfigId,
+        is_favorite: false
       });
 
     if (error) {
       console.error("Error saving conversation history:", error);
     } else {
-      console.log("Conversation saved to history");
+      console.log("Conversation saved to history successfully");
     }
   } catch (error) {
     console.error("Error in saveConversationHistory:", error);
