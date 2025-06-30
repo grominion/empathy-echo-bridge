@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import {
   Zap,
   Crown,
   Gem,
-  Fire,
+  Flame,
   TrendingUp
 } from 'lucide-react';
 
@@ -96,7 +95,7 @@ export const GamificationSystem: React.FC = () => {
       id: 'daily_streak_7',
       title: 'Semaine Consistante',
       description: 'Maintenez une série de 7 jours consécutifs',
-      icon: <Fire className="h-6 w-6" />,
+      icon: <Flame className="h-6 w-6" />,
       unlocked: true,
       progress: 7,
       maxProgress: 7,
@@ -173,7 +172,7 @@ export const GamificationSystem: React.FC = () => {
         <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Fire className="h-6 w-6 text-orange-600" />
+              <Flame className="h-6 w-6 text-orange-600" />
               <span className="text-2xl font-bold text-orange-600">{streak}</span>
             </div>
             <h3 className="font-bold text-gray-800 mb-1">Jours Consécutifs</h3>
