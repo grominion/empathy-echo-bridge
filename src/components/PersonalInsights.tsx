@@ -1,342 +1,322 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  Brain, 
   TrendingUp, 
-  Target,
-  AlertCircle,
-  CheckCircle,
-  Lightbulb,
-  Users,
+  Brain, 
   Heart,
-  MessageSquare,
+  Target,
   Calendar,
-  Star,
-  ArrowRight
+  BarChart3,
+  PieChart,
+  Activity,
+  Lightbulb,
+  Award,
+  Users,
+  MessageSquare,
+  Clock
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 
-interface PersonalInsight {
+interface InsightData {
+  date: string;
+  empathyScore: number;
+  communicationScore: number;
+  conflictResolution: number;
+  selfAwareness: number;
+}
+
+interface PersonalPattern {
   id: string;
-  type: 'strength' | 'growth_area' | 'pattern' | 'recommendation';
   title: string;
   description: string;
-  impact: 'high' | 'medium' | 'low';
-  category: 'communication' | 'empathy' | 'conflict_resolution' | 'self_awareness';
-  actionable: boolean;
-  actionSteps?: string[];
-}
-
-interface BehaviorPattern {
-  id: string;
-  name: string;
   frequency: number;
-  trend: 'improving' | 'stable' | 'declining';
-  description: string;
-  suggestions: string[];
-}
-
-interface RelationshipMetric {
-  name: string;
-  score: number;
-  change: number;
-  description: string;
+  impact: 'positive' | 'neutral' | 'negative';
+  suggestion: string;
 }
 
 export const PersonalInsights: React.FC = () => {
-  const [insights, setInsights] = useState<PersonalInsight[]>([
-    {
-      id: '1',
-      type: 'strength',
-      title: 'Excellent Auditeur Actif',
-      description: 'Vos analyses montrent une capacité remarquable à comprendre les perspectives multiples. Vous posez souvent les bonnes questions.',
-      impact: 'high',
-      category: 'communication',
-      actionable: false
-    },
-    {
-      id: '2',
-      type: 'growth_area',
-      title: 'Gestion des Émotions Intenses',
-      description: 'Vous avez tendance à éviter les conflits émotionnellement chargés. Développer cette compétence enrichirait vos relations.',
-      impact: 'medium',
-      category: 'conflict_resolution',
-      actionable: true,
-      actionSteps: [
-        'Pratiquez la respiration profonde avant les conversations difficiles',
-        'Identifiez vos déclencheurs émotionnels personnels',
-        'Utilisez des phrases "Je" pour exprimer vos sentiments',
-        'Demandez des pauses si nécessaire pendant les discussions intenses'
-      ]
-    },
-    {
-      id: '3',
-      type: 'pattern',
-      title: 'Recherche de Perfectionnisme',
-      description: 'Vous analysez souvent les situations jusqu\'au moindre détail. C\'est une force, mais attention à la sur-analyse.',
-      impact: 'medium',
-      category: 'self_awareness',
-      actionable: true,
-      actionSteps: [
-        'Fixez-vous des limites de temps pour la réflexion',
-        'Acceptez que certaines situations restent imparfaites',
-        'Célébrez les progrès, pas seulement la perfection'
-      ]
-    },
-    {
-      id: '4',
-      type: 'recommendation',
-      title: 'Développez Votre Assertivité',
-      description: 'Basé sur vos patterns, vous bénéficieriez de techniques d\'assertivité pour équilibrer empathie et besoins personnels.',
-      impact: 'high',
-      category: 'communication',
-      actionable: true,
-      actionSteps: [
-        'Pratiquez dire "non" de manière bienveillante',
-        'Exprimez vos besoins clairement et directement',
-        'Utilisez des affirmations positives sur votre valeur',
-        'Négociez des compromis équitables'
-      ]
-    }
-  ]);
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
+  
+  const progressData: InsightData[] = [
+    { date: '01/12', empathyScore: 65, communicationScore: 70, conflictResolution: 60, selfAwareness: 68 },
+    { date: '08/12', empathyScore: 68, communicationScore: 72, conflictResolution: 65, selfAwareness: 70 },
+    { date: '15/12', empathyScore: 72, communicationScore: 75, conflictResolution: 70, selfAwareness: 72 },
+    { date: '22/12', empathyScore: 75, communicationScore: 78, conflictResolution: 73, selfAwareness: 75 },
+    { date: '29/12', empathyScore: 78, communicationScore: 80, conflictResolution: 76, selfAwareness: 78 }
+  ];
 
-  const [behaviorPatterns, setBehaviorPatterns] = useState<BehaviorPattern[]>([
+  const patterns: PersonalPattern[] = [
     {
       id: '1',
-      name: 'Écoute avant de répondre',
+      title: 'Communication en début de semaine',
+      description: 'Vos scores de communication sont 15% plus élevés le mardi et mercredi',
       frequency: 85,
-      trend: 'improving',
-      description: 'Vous prenez le temps d\'écouter avant de formuler vos réponses',
-      suggestions: ['Continuez cette excellente habitude', 'Partagez cette technique avec d\'autres']
+      impact: 'positive',
+      suggestion: 'Planifiez vos conversations importantes en milieu de semaine'
     },
     {
       id: '2',
-      name: 'Évitement des confrontations',
-      frequency: 40,
-      trend: 'stable',
-      description: 'Vous avez tendance à éviter les conversations difficiles',
-      suggestions: ['Commencez par de petites conversations difficiles', 'Préparez vos points clés à l\'avance']
+      title: 'Gestion des conflits après 16h',
+      description: 'Votre capacité de résolution de conflits diminue de 20% en fin de journée',
+      frequency: 73,
+      impact: 'negative',
+      suggestion: 'Reportez les discussions difficiles au matin quand possible'
     },
     {
       id: '3',
-      name: 'Recherche de solutions',
-      frequency: 78,
-      trend: 'improving',
-      description: 'Vous cherchez activement des solutions lors des conflits',
-      suggestions: ['Excellent mindset', 'Aidez les autres à adopter cette approche']
+      title: 'Empathie croissante',
+      description: 'Votre score d\'empathie augmente de 2 points chaque semaine depuis un mois',
+      frequency: 100,
+      impact: 'positive',
+      suggestion: 'Continuez vos pratiques d\'écoute active, elles portent leurs fruits !'
     }
-  ]);
+  ];
 
-  const [relationshipMetrics, setRelationshipMetrics] = useState<RelationshipMetric[]>([
-    {
-      name: 'Qualité des Communications',
-      score: 76,
-      change: +8,
-      description: 'Vos échanges sont devenus plus authentiques et empathiques'
-    },
-    {
-      name: 'Gestion des Conflits',
-      score: 68,
-      change: +12,
-      description: 'Net progrès dans votre approche des désaccords'
-    },
-    {
-      name: 'Intelligence Émotionnelle',
-      score: 82,
-      change: +5,
-      description: 'Excellente capacité à comprendre et gérer les émotions'
-    },
-    {
-      name: 'Empathie Active',
-      score: 88,
-      change: +3,
-      description: 'Votre point fort - vous comprenez vraiment les autres'
-    }
-  ]);
+  const skillDistribution = [
+    { name: 'Empathie', value: 78, color: '#ec4899' },
+    { name: 'Communication', value: 80, color: '#3b82f6' },
+    { name: 'Résolution', value: 76, color: '#f59e0b' },
+    { name: 'Conscience', value: 78, color: '#8b5cf6' }
+  ];
 
-  const getInsightIcon = (type: string) => {
-    switch (type) {
-      case 'strength': return <CheckCircle className="h-5 w-5 text-green-600" />;
-      case 'growth_area': return <TrendingUp className="h-5 w-5 text-blue-600" />;
-      case 'pattern': return <Brain className="h-5 w-5 text-purple-600" />;
-      case 'recommendation': return <Lightbulb className="h-5 w-5 text-orange-600" />;
-      default: return <Star className="h-5 w-5 text-gray-600" />;
-    }
+  const weeklyStats = {
+    conversationsAnalyzed: 12,
+    avgEmpathyGain: '+3 points',
+    longestStreak: '8 jours',
+    challengesCompleted: 5,
+    journalEntries: 4,
+    communityInteractions: 7
   };
 
-  const getInsightColor = (type: string) => {
-    switch (type) {
-      case 'strength': return 'bg-green-50 border-green-200';
-      case 'growth_area': return 'bg-blue-50 border-blue-200';
-      case 'pattern': return 'bg-purple-50 border-purple-200';
-      case 'recommendation': return 'bg-orange-50 border-orange-200';
-      default: return 'bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getImpactColor = (impact: string) => {
+  const getPatternColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'bg-red-100 text-red-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'low': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case 'improving': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'declining': return <TrendingUp className="h-4 w-4 text-red-600 rotate-180" />;
-      case 'stable': return <Target className="h-4 w-4 text-gray-600" />;
-      default: return <Target className="h-4 w-4 text-gray-600" />;
+      case 'positive': return 'bg-green-100 text-green-700 border-green-200';
+      case 'negative': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+      <Card className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 border-blue-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-purple-600" />
-            Vos Insights Personnels - Comprendre Qui Vous Êtes
+            <Brain className="h-6 w-6 text-blue-600" />
+            Vos Insights Personnels - Analyse Comportementale
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-700">
-            Basé sur vos analyses et réflexions, voici votre profil relationnel unique. 
-            Ces insights vous aident à construire des relations plus authentiques et épanouissantes.
+          <p className="text-gray-700 mb-4">
+            Découvrez vos patterns, célébrez vos progrès et obtenez des recommandations personnalisées 
+            basées sur votre parcours unique de développement relationnel.
           </p>
-        </CardContent>
-      </Card>
-
-      {/* Relationship Metrics */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-red-500" />
-            Votre Évolution Relationnelle
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            {relationshipMetrics.map((metric, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium text-gray-800">{metric.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-gray-800">{metric.score}%</span>
-                    <Badge className={metric.change > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                      {metric.change > 0 ? '+' : ''}{metric.change}
-                    </Badge>
-                  </div>
-                </div>
-                <Progress value={metric.score} className="h-2" />
-                <p className="text-sm text-gray-600">{metric.description}</p>
-              </div>
-            ))}
+          
+          <div className="flex gap-3">
+            <button
+              onClick={() => setTimeRange('week')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeRange === 'week' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              7 jours
+            </button>
+            <button
+              onClick={() => setTimeRange('month')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeRange === 'month' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              30 jours
+            </button>
+            <button
+              onClick={() => setTimeRange('quarter')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                timeRange === 'quarter' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              3 mois
+            </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Personal Insights */}
+      {/* Weekly Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <MessageSquare className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold text-blue-600">{weeklyStats.conversationsAnalyzed}</div>
+            <div className="text-xs text-gray-600">Analyses</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="h-6 w-6 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold text-green-600">{weeklyStats.avgEmpathyGain}</div>
+            <div className="text-xs text-gray-600">Empathie</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Activity className="h-6 w-6 mx-auto mb-2 text-orange-600" />
+            <div className="text-2xl font-bold text-orange-600">{weeklyStats.longestStreak}</div>
+            <div className="text-xs text-gray-600">Série</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Target className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold text-purple-600">{weeklyStats.challengesCompleted}</div>
+            <div className="text-xs text-gray-600">Défis</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Calendar className="h-6 w-6 mx-auto mb-2 text-pink-600" />
+            <div className="text-2xl font-bold text-pink-600">{weeklyStats.journalEntries}</div>
+            <div className="text-xs text-gray-600">Journal</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Users className="h-6 w-6 mx-auto mb-2 text-indigo-600" />
+            <div className="text-2xl font-bold text-indigo-600">{weeklyStats.communityInteractions}</div>
+            <div className="text-xs text-gray-600">Social</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            Évolution de Vos Compétences Relationnelles
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={progressData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis domain={[50, 90]} />
+              <Tooltip />
+              <Line type="monotone" dataKey="empathyScore" stroke="#ec4899" strokeWidth={3} name="Empathie" />
+              <Line type="monotone" dataKey="communicationScore" stroke="#3b82f6" strokeWidth={3} name="Communication" />
+              <Line type="monotone" dataKey="conflictResolution" stroke="#f59e0b" strokeWidth={3} name="Résolution" />
+              <Line type="monotone" dataKey="selfAwareness" stroke="#8b5cf6" strokeWidth={3} name="Conscience" />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Skills Distribution */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-purple-600" />
+              Répartition de Vos Compétences
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <RechartsPieChart>
+                <Pie
+                  data={skillDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {skillDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              {skillDistribution.map((skill, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: skill.color }}></div>
+                  <span className="text-sm text-gray-700">{skill.name}: {skill.value}%</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-yellow-600" />
+              Vos Points Forts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="font-semibold text-green-800 mb-2">🌟 Excellence en Communication</h4>
+              <p className="text-sm text-green-700">
+                Votre score de 80% vous place dans le top 15% des utilisateurs. 
+                Vous excellez dans l'expression claire de vos idées.
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2">💡 Progression Constante</h4>
+              <p className="text-sm text-blue-700">
+                +12 points d'empathie ce mois-ci ! Votre engagement dans les pratiques 
+                d'écoute active porte vraiment ses fruits.
+              </p>
+            </div>
+            
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <h4 className="font-semibold text-purple-800 mb-2">🎯 Consistance Remarquable</h4>
+              <p className="text-sm text-purple-700">
+                8 jours consécutifs d'activité ! Cette régularité transforme 
+                littéralement votre façon d'interagir avec les autres.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Personal Patterns */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-yellow-600" />
-            Vos Insights Personnalisés
+            Vos Patterns Comportementaux Uniques
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {insights.map((insight) => (
-              <Card key={insight.id} className={`${getInsightColor(insight.type)} border-2`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    {getInsightIcon(insight.type)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-gray-800">{insight.title}</h4>
-                        <Badge className={getImpactColor(insight.impact)}>
-                          Impact {insight.impact}
-                        </Badge>
-                        <Badge variant="outline">
-                          {insight.category.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-gray-700 mb-3 leading-relaxed">
-                        {insight.description}
-                      </p>
-
-                      {insight.actionable && insight.actionSteps && (
-                        <div className="bg-white/70 rounded-lg p-3 mt-3">
-                          <h5 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
-                            <ArrowRight className="h-4 w-4" />
-                            Actions concrètes pour progresser :
-                          </h5>
-                          <ul className="space-y-1">
-                            {insight.actionSteps.map((step, index) => (
-                              <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                                <span className="bg-gray-200 text-gray-700 rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                                  {index + 1}
-                                </span>
-                                {step}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Behavior Patterns */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-600" />
-            Vos Patterns de Comportement
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {behaviorPatterns.map((pattern) => (
-              <Card key={pattern.id} className="bg-gray-50">
+            {patterns.map((pattern) => (
+              <Card key={pattern.id} className={`border-l-4 ${getPatternColor(pattern.impact)}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-semibold text-gray-800">{pattern.name}</h4>
-                      {getTrendIcon(pattern.trend)}
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-800 mb-1">{pattern.title}</h4>
+                      <p className="text-sm text-gray-600 mb-2">{pattern.description}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-800">{pattern.frequency}%</div>
-                      <div className="text-xs text-gray-600">fréquence</div>
-                    </div>
+                    <Badge className={getPatternColor(pattern.impact)}>
+                      {pattern.frequency}% de fréquence
+                    </Badge>
                   </div>
                   
-                  <Progress value={pattern.frequency} className="h-2 mb-3" />
-                  
-                  <p className="text-sm text-gray-700 mb-3">{pattern.description}</p>
-                  
-                  <div className="bg-white rounded-lg p-3">
-                    <h5 className="font-medium text-gray-800 mb-2">Suggestions :</h5>
-                    <ul className="space-y-1">
-                      {pattern.suggestions.map((suggestion, index) => (
-                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                          <MessageSquare className="h-3 w-3 text-blue-500 flex-shrink-0 mt-1" />
-                          {suggestion}
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <h5 className="font-medium text-blue-800 mb-1 flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Recommandation Personnalisée
+                    </h5>
+                    <p className="text-sm text-blue-700">{pattern.suggestion}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -345,26 +325,46 @@ export const PersonalInsights: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Motivational Message */}
+      {/* Action Items */}
       <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
-        <CardContent className="p-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Star className="h-6 w-6 text-yellow-500" />
-            <h3 className="text-xl font-bold text-gray-800">Vous Progressez Magnifiquement !</h3>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-green-100 rounded-full">
+              <Clock className="h-8 w-8 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-800">Prochaines Actions Recommandées</h3>
+              <p className="text-gray-600">Basées sur votre analyse comportementale</p>
+            </div>
           </div>
-          <p className="text-gray-700 mb-4 leading-relaxed">
-            Chaque analyse, chaque réflexion, chaque effort que vous faites vous rapproche de la personne 
-            que vous voulez devenir. Vos relations s'améliorent parce que <strong>vous</strong> vous améliorez.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Button className="bg-gradient-to-r from-green-500 to-blue-500">
-              <Calendar className="h-4 w-4 mr-2" />
-              Planifier mon prochain défi
-            </Button>
-            <Button variant="outline">
-              <Heart className="h-4 w-4 mr-2" />
-              Partager mes progrès
-            </Button>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-800 mb-2">Cette Semaine</h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Pratiquer l'écoute active 3x</li>
+                <li>• Journal de gratitude quotidien</li>
+                <li>• Un défi relationnel difficile</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-800 mb-2">Ce Mois</h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Améliorer résolution de conflits</li>
+                <li>• Rejoindre 2 discussions communauté</li>
+                <li>• Objectif: 85% en empathie</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg">
+              <h4 className="font-semibold text-gray-800 mb-2">Long Terme</h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Devenir mentor communauté</li>
+                <li>• Atteindre niveau 5</li>
+                <li>• Créer vos propres défis</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>

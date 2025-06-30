@@ -3,118 +3,148 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PersonalGrowthModule } from '../components/PersonalGrowthModule';
-import { ReflectionJournal } from '../components/ReflectionJournal';
-import { PersonalInsights } from '../components/PersonalInsights';
+import { PersonalGrowthModule } from '@/components/PersonalGrowthModule';
+import { GamificationSystem } from '@/components/GamificationSystem';
+import { PersonalCoach } from '@/components/PersonalCoach';
+import { CommunityHub } from '@/components/CommunityHub';
+import { ReflectionJournal } from '@/components/ReflectionJournal';
+import { PersonalInsights } from '@/components/PersonalInsights';
+import { MotivationNotifications } from '@/components/MotivationNotifications';
 import { 
-  TrendingUp, 
+  Trophy, 
+  Target, 
+  Users, 
   BookOpen, 
-  Brain, 
-  Target,
-  Heart,
-  Star,
-  Sparkles
+  Brain,
+  MessageSquare,
+  Sparkles,
+  Heart
 } from 'lucide-react';
 
 const PersonalDevelopment = () => {
-  const [activeTab, setActiveTab] = useState('growth');
+  const [activeTab, setActiveTab] = useState('overview');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <MotivationNotifications />
+      
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-700 rounded-2xl mb-4 shadow-lg">
-              <Sparkles className="w-10 h-10 text-white" />
+          <header className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-700 rounded-2xl mb-6 shadow-lg">
+              <Heart className="text-3xl font-bold text-white h-10 w-10" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-blue-800 bg-clip-text text-transparent mb-3">
-              Votre Développement Personnel
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-blue-800 bg-clip-text text-transparent mb-4">
+              Développement Personnel & Relations
             </h1>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Devenez la meilleure version de vous-même. Transformez vos relations, 
-              développez votre empathie et créez des connexions authentiques.
+            <p className="text-xl text-slate-600 mb-2">
+              Transformez vos relations, développez votre empathie
             </p>
-          </div>
+            <p className="text-sm text-slate-500 max-w-3xl mx-auto leading-relaxed">
+              Un écosystème complet pour développer vos compétences relationnelles, 
+              avec des défis personnalisés, un coaching IA, une communauté bienveillante 
+              et des insights comportementaux avancés.
+            </p>
+          </header>
 
-          {/* Motivation Card */}
-          <Card className="mb-8 bg-gradient-to-r from-purple-100 via-blue-100 to-green-100 border-2 border-purple-200 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-center gap-4 text-center">
-                <div className="flex items-center gap-2">
-                  <Heart className="h-6 w-6 text-red-500" />
-                  <span className="font-semibold text-gray-800">Relations Plus Profondes</span>
-                </div>
-                <div className="w-px h-8 bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <Brain className="h-6 w-6 text-purple-500" />
-                  <span className="font-semibold text-gray-800">Intelligence Émotionnelle</span>
-                </div>
-                <div className="w-px h-8 bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-6 w-6 text-yellow-500" />
-                  <span className="font-semibold text-gray-800">Épanouissement Personnel</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Main Content */}
+          {/* Navigation Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8 bg-white shadow-md">
-              <TabsTrigger 
-                value="growth" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
-              >
-                <Target className="w-4 h-4" />
-                Défis & Croissance
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <span className="hidden sm:inline">Vue d'ensemble</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="reflection" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
-              >
-                <BookOpen className="w-4 h-4" />
-                Journal de Réflexion
+              <TabsTrigger value="challenges" className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                <span className="hidden sm:inline">Défis</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="insights" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white"
-              >
-                <Brain className="w-4 h-4" />
-                Insights Personnels
+              <TabsTrigger value="gamification" className="flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                <span className="hidden sm:inline">Niveaux</span>
+              </TabsTrigger>
+              <TabsTrigger value="coach" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Coach IA</span>
+              </TabsTrigger>
+              <TabsTrigger value="community" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Communauté</span>
+              </TabsTrigger>
+              <TabsTrigger value="journal" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Journal</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="growth" className="mt-6">
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid lg:grid-cols-3 gap-6 mb-8">
+                <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setActiveTab('challenges')}>
+                  <CardContent className="p-6 text-center">
+                    <Target className="h-12 w-12 mx-auto mb-4 text-purple-600" />
+                    <h3 className="font-bold text-lg text-gray-800 mb-2">Défis Quotidiens</h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Challenges personnalisés pour développer votre empathie et vos relations
+                    </p>
+                    <Button variant="outline" size="sm">Voir mes défis</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setActiveTab('coach')}>
+                  <CardContent className="p-6 text-center">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-600" />
+                    <h3 className="font-bold text-lg text-gray-800 mb-2">Coach Personnel IA</h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Conseils personnalisés et accompagnement adapté à votre parcours
+                    </p>
+                    <Button variant="outline" size="sm">Parler à mon coach</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setActiveTab('community')}>
+                  <CardContent className="p-6 text-center">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-orange-600" />
+                    <h3 className="font-bold text-lg text-gray-800 mb-2">Communauté</h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Partagez, apprenez et grandissez avec d'autres personnes bienveillantes
+                    </p>
+                    <Button variant="outline" size="sm">Rejoindre</Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <PersonalInsights />
+            </TabsContent>
+
+            {/* Challenges Tab */}
+            <TabsContent value="challenges">
               <PersonalGrowthModule />
             </TabsContent>
 
-            <TabsContent value="reflection" className="mt-6">
+            {/* Gamification Tab */}
+            <TabsContent value="gamification">
+              <GamificationSystem />
+            </TabsContent>
+
+            {/* Coach Tab */}
+            <TabsContent value="coach">
+              <PersonalCoach />
+            </TabsContent>
+
+            {/* Community Tab */}
+            <TabsContent value="community">
+              <CommunityHub />
+            </TabsContent>
+
+            {/* Journal Tab */}
+            <TabsContent value="journal">
               <ReflectionJournal />
             </TabsContent>
-
-            <TabsContent value="insights" className="mt-6">
-              <PersonalInsights />
-            </TabsContent>
           </Tabs>
-
-          {/* Footer Motivation */}
-          <Card className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <TrendingUp className="h-6 w-6 text-indigo-600" />
-                <h3 className="text-xl font-bold text-gray-800">Votre Transformation Continue</h3>
-              </div>
-              <p className="text-gray-700 mb-4 max-w-2xl mx-auto leading-relaxed">
-                Chaque jour est une opportunité de grandir. Vous ne développez pas seulement de meilleures relations - 
-                vous devenez une personne plus épanouie, plus connectée, plus authentique.
-              </p>
-              <p className="text-sm text-gray-600 italic">
-                "La croissance personnelle n'est pas un événement, c'est un mode de vie." 
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
