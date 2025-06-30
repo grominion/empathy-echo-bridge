@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ConflictInput } from './ConflictInput';
@@ -12,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Zap, TrendingUp, Clock } from 'lucide-react';
 
 export interface AnalysisResult {
-  otherPerspective: string;
-  emotionalBridge: string;
-  translator: Array<{
+  otherPerspective?: string;
+  emotionalBridge?: string;
+  translator?: Array<{
     dontSay: string;
     insteadTry: string;
   }>;
@@ -184,7 +183,6 @@ export const EchoSimulator: React.FC = () => {
         onAnalyze={handleAnalyze}
         onVoiceAnalyze={handleVoiceAnalyze}
         isAnalyzing={isLoading}
-        initialValue={selectedTemplate}
       />
 
       {/* Message d'erreur */}
