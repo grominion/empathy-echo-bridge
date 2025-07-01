@@ -1,347 +1,402 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   MessageSquare, 
+  Send, 
+  Bot, 
+  User, 
   Heart, 
+  Brain, 
   Lightbulb,
   Target,
-  Calendar,
   TrendingUp,
-  User,
   Sparkles,
-  CheckCircle,
-  ArrowRight,
-  Clock
+  Mic,
+  MicOff,
+  Volume2,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
 
-interface CoachingRecommendation {
+interface Message {
   id: string;
-  type: 'daily_action' | 'relationship_tip' | 'mindset_shift' | 'practice_exercise';
-  title: string;
-  description: string;
-  impact: 'immediate' | 'short_term' | 'long_term';
-  difficulty: 'easy' | 'medium' | 'challenging';
-  timeRequired: string;
-  personalizedReason: string;
-  actionSteps: string[];
+  type: 'user' | 'coach';
+  content: string;
+  timestamp: Date;
+  category?: 'empathy' | 'communication' | 'conflict' | 'general';
+  suggestions?: string[];
 }
 
-interface DailyCoachingMessage {
-  message: string;
-  tone: 'encouraging' | 'motivational' | 'supportive' | 'challenging';
-  focusArea: string;
+interface CoachPersonality {
+  name: string;
+  specialty: string;
+  tone: string;
+  avatar: string;
+  color: string;
 }
 
 export const PersonalCoach: React.FC = () => {
-  const [todaysFocus, setTodaysFocus] = useState('Communication Authentique');
-  const [selectedRecommendation, setSelectedRecommendation] = useState<CoachingRecommendation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [selectedCoach, setSelectedCoach] = useState<CoachPersonality | null>(null);
+  const [sessionStats, setSessionStats] = useState({
+    duration: 0,
+    messagesCount: 0,
+    insights: 0
+  });
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const dailyMessage: DailyCoachingMessage = {
-    message: "Aujourd'hui, concentrez-vous sur l'écoute véritable. Au lieu de préparer votre réponse pendant que l'autre parle, soyez pleinement présent(e). Cette pratique simple mais puissante transformera vos conversations.",
-    tone: 'encouraging',
-    focusArea: 'Écoute Active'
-  };
-
-  const recommendations: CoachingRecommendation[] = [
+  const coaches: CoachPersonality[] = [
     {
-      id: 'morning_intention',
-      type: 'daily_action',
-      title: 'Intention Relationnelle du Matin',
-      description: 'Commencez chaque journée en définissant une intention pour vos interactions.',
-      impact: 'immediate',
-      difficulty: 'easy',
-      timeRequired: '2 minutes',
-      personalizedReason: 'Basé sur votre tendance à être réactif(ve) dans les conversations matinales.',
-      actionSteps: [
-        'Avant de vérifier votre téléphone, prenez 2 minutes',
-        'Demandez-vous : "Comment veux-je me présenter aujourd\'hui ?"',
-        'Choisissez une qualité (patience, curiosité, bienveillance)',
-        'Visualisez-vous incarnant cette qualité dans vos interactions'
-      ]
+      name: 'Emma',
+      specialty: 'Empathie & Relations',
+      tone: 'Bienveillante et chaleureuse',
+      avatar: '🤗',
+      color: 'from-pink-500 to-rose-500'
     },
     {
-      id: 'curiosity_questions',
-      type: 'practice_exercise',
-      title: 'Les 3 Questions de Curiosité',
-      description: 'Développez votre empathie en posant des questions qui montrent un intérêt genuine.',
-      impact: 'short_term',
-      difficulty: 'medium',
-      timeRequired: '15 minutes',
-      personalizedReason: 'Vous excellez dans l\'analyse mais pourriez davantage explorer les perspectives.',
-      actionSteps: [
-        'Dans votre prochaine conversation, posez 3 questions ouvertes',
-        '"Qu\'est-ce qui vous passionne le plus dans ce projet ?"',
-        '"Comment vous sentez-vous par rapport à cette situation ?"',
-        '"Qu\'est-ce qui serait le plus utile pour vous maintenant ?"',
-        'Écoutez vraiment les réponses sans préparer la vôtre'
-      ]
+      name: 'Marc',
+      specialty: 'Communication Pro',
+      tone: 'Structuré et motivant',
+      avatar: '💼',
+      color: 'from-blue-500 to-indigo-500'
     },
     {
-      id: 'conflict_reframe',
-      type: 'mindset_shift',
-      title: 'Reframe : Du Conflit à la Connexion',
-      description: 'Changez votre perspective sur les désaccords pour les voir comme des opportunités.',
-      impact: 'long_term',
-      difficulty: 'challenging',
-      timeRequired: '20 minutes',
-      personalizedReason: 'Vos analyses montrent une tendance à éviter certains conflits constructifs.',
-      actionSteps: [
-        'Identifiez un désaccord récent qui vous a mis(e) mal à l\'aise',
-        'Écrivez 3 choses que cette personne essayait peut-être d\'exprimer',
-        'Trouvez un point commun, même petit, dans vos positions',
-        'Pratiquez une phrase comme : "Je vois que c\'est important pour vous, aidez-moi à comprendre..."'
-      ]
+      name: 'Léa',
+      specialty: 'Résolution Conflits',
+      tone: 'Calme et analytique',
+      avatar: '⚖️',
+      color: 'from-green-500 to-emerald-500'
     },
     {
-      id: 'emotional_check_in',
-      type: 'relationship_tip',
-      title: 'Check-in Émotionnel Quotidien',
-      description: 'Créez des moments de connexion authentique avec vos proches.',
-      impact: 'immediate',
-      difficulty: 'easy',
-      timeRequired: '5 minutes',
-      personalizedReason: 'Parfait pour approfondir vos relations existantes.',
-      actionSteps: [
-        'Choisissez une personne importante pour vous',
-        'Demandez : "Comment tu te sens vraiment aujourd\'hui ?"',
-        'Écoutez sans donner de conseils immédiatement',
-        'Partagez aussi votre état émotionnel authentique',
-        'Terminez par : "Merci de partager ça avec moi"'
-      ]
+      name: 'Alex',
+      specialty: 'Intelligence Émotionnelle',
+      tone: 'Sage et perspicace',
+      avatar: '🧠',
+      color: 'from-purple-500 to-violet-500'
     }
   ];
 
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'immediate': return 'bg-green-100 text-green-700';
-      case 'short_term': return 'bg-blue-100 text-blue-700';
-      case 'long_term': return 'bg-purple-100 text-purple-700';
-      default: return 'bg-gray-100 text-gray-700';
+  const quickPrompts = [
+    'Comment gérer une conversation difficile avec mon collègue ?',
+    'Je me sens incompris dans ma relation',
+    'Comment améliorer mon écoute active ?',
+    'Aide-moi à résoudre ce conflit familial',
+    'Comment exprimer mes émotions sainement ?'
+  ];
+
+  useEffect(() => {
+    if (!selectedCoach) {
+      setSelectedCoach(coaches[0]);
     }
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSessionStats(prev => ({
+        ...prev,
+        duration: prev.duration + 1
+      }));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const simulateCoachResponse = async (userMessage: string): Promise<Message> => {
+    const responses = {
+      empathy: [
+        "Je comprends que cette situation soit difficile pour vous. Parlons de ce que vous ressentez exactement.",
+        "Vos émotions sont valides. Comment pensez-vous que l'autre personne pourrait se sentir ?",
+        "C'est courageux de partager cela. Quelle serait votre approche idéale dans cette situation ?"
+      ],
+      communication: [
+        "La communication efficace commence par l'écoute. Avez-vous essayé de reformuler ce que dit l'autre personne ?",
+        "Utilisons la technique du 'je' : au lieu de 'tu fais', dites 'je ressens'. Comment pourriez-vous reformuler ?",
+        "Le timing est crucial. Quel serait le meilleur moment pour cette conversation ?"
+      ],
+      conflict: [
+        "Identifions d'abord les besoins de chacun. Quels sont vos besoins dans cette situation ?",
+        "Cherchons une solution gagnant-gagnant. Qu'est-ce qui serait acceptable pour toutes les parties ?",
+        "Parfois, il faut accepter d'être en désaccord. Comment pourriez-vous coexister malgré vos différences ?"
+      ]
+    };
+
+    const category = userMessage.toLowerCase().includes('conflit') ? 'conflict' :
+                    userMessage.toLowerCase().includes('communic') ? 'communication' :
+                    userMessage.toLowerCase().includes('sens') || userMessage.toLowerCase().includes('émotion') ? 'empathy' : 'general';
+
+    const categoryResponses = responses[category as keyof typeof responses] || responses.empathy;
+    const randomResponse = categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
+
+    const suggestions = [
+      'Exercice de respiration 4-7-8',
+      'Technique de l\'écoute active',
+      'Script de communication non-violente'
+    ];
+
+    return {
+      id: Date.now().toString(),
+      type: 'coach',
+      content: randomResponse,
+      timestamp: new Date(),
+      category: category as any,
+      suggestions: Math.random() > 0.5 ? suggestions : undefined
+    };
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'challenging': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: inputValue,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsTyping(true);
+
+    setSessionStats(prev => ({
+      ...prev,
+      messagesCount: prev.messagesCount + 1
+    }));
+
+    // Simulate coach thinking time
+    setTimeout(async () => {
+      const coachResponse = await simulateCoachResponse(inputValue);
+      setMessages(prev => [...prev, coachResponse]);
+      setIsTyping(false);
+      
+      if (coachResponse.suggestions) {
+        setSessionStats(prev => ({
+          ...prev,
+          insights: prev.insights + 1
+        }));
+      }
+    }, 1000 + Math.random() * 2000);
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'daily_action': return <Calendar className="h-4 w-4" />;
-      case 'relationship_tip': return <Heart className="h-4 w-4" />;
-      case 'mindset_shift': return <Lightbulb className="h-4 w-4" />;
-      case 'practice_exercise': return <Target className="h-4 w-4" />;
-      default: return <Sparkles className="h-4 w-4" />;
-    }
+  const handleQuickPrompt = (prompt: string) => {
+    setInputValue(prompt);
+    inputRef.current?.focus();
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Daily Coaching Message */}
-      <Card className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-6 w-6 text-blue-600" />
-            Votre Coach Personnel Vous Parle
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
+      {/* Header with coach selection */}
+      <Card className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-indigo-200 shadow-lg">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
+            Coach Personnel IA
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="bg-white/70 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-5 w-5 text-blue-600" />
-                <span className="font-semibold text-blue-800">Focus du jour : {dailyMessage.focusArea}</span>
-              </div>
-              <p className="text-gray-700 leading-relaxed mb-3">
-                {dailyMessage.message}
-              </p>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Sparkles className="h-4 w-4" />
-                <span>Personnalisé pour votre parcours de développement</span>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                J'ai appliqué ce conseil
-              </Button>
-              <Button variant="outline">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Voir plus de conseils
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Personalized Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-purple-600" />
-            Recommandations Personnalisées pour Vous
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
-            {recommendations.map((rec) => (
-              <Card 
-                key={rec.id} 
-                className="cursor-pointer hover:shadow-md transition-all hover:bg-gray-50"
-                onClick={() => setSelectedRecommendation(rec)}
+        <CardContent className="space-y-4">
+          {/* Coach selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {coaches.map((coach) => (
+              <div
+                key={coach.name}
+                onClick={() => setSelectedCoach(coach)}
+                className={`p-3 rounded-xl cursor-pointer transition-all duration-300 border-2 ${
+                  selectedCoach?.name === coach.name
+                    ? 'border-indigo-300 bg-white shadow-md transform scale-105'
+                    : 'border-transparent bg-white/60 hover:bg-white/80 hover:scale-102'
+                }`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-                      {getTypeIcon(rec.type)}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 mb-2">{rec.title}</h4>
-                      <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-                        {rec.description}
-                      </p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <Badge className={getImpactColor(rec.impact)}>
-                          {rec.impact}
-                        </Badge>
-                        <Badge className={getDifficultyColor(rec.difficulty)}>
-                          {rec.difficulty}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {rec.timeRequired}
-                        </Badge>
-                      </div>
-                      
-                      <div className="bg-blue-50 p-2 rounded text-xs text-blue-700">
-                        <strong>Pourquoi pour vous :</strong> {rec.personalizedReason}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="text-center">
+                  <div className="text-2xl mb-2">{coach.avatar}</div>
+                  <div className="font-semibold text-sm text-gray-800">{coach.name}</div>
+                  <div className="text-xs text-gray-600 mb-1">{coach.specialty}</div>
+                  <div className="text-xs text-gray-500">{coach.tone}</div>
+                </div>
+              </div>
             ))}
           </div>
+
+          {/* Session stats */}
+          <div className="flex justify-center gap-4 sm:gap-6">
+            <div className="text-center">
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>{formatTime(sessionStats.duration)}</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <MessageSquare className="h-4 w-4" />
+                <span>{sessionStats.messagesCount} messages</span>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Lightbulb className="h-4 w-4" />
+                <span>{sessionStats.insights} insights</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Detailed Recommendation Modal */}
-      {selectedRecommendation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {getTypeIcon(selectedRecommendation.type)}
-                {selectedRecommendation.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-700 leading-relaxed">
-                {selectedRecommendation.description}
-              </p>
-              
-              <div className="bg-purple-50 border-l-4 border-purple-400 p-4">
-                <h4 className="font-semibold text-purple-800 mb-2">Pourquoi cette recommandation ?</h4>
-                <p className="text-purple-700 text-sm">
-                  {selectedRecommendation.personalizedReason}
-                </p>
-              </div>
-              
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Plan d'Action Étape par Étape
-                </h4>
-                <ol className="space-y-2">
-                  {selectedRecommendation.actionSteps.map((step, index) => (
-                    <li key={index} className="text-sm text-blue-700 flex items-start gap-3">
-                      <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                        {index + 1}
-                      </span>
-                      <span className="leading-relaxed">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+      {/* Chat interface */}
+      <Card className="bg-white shadow-lg border-slate-200">
+        <CardContent className="p-0">
+          {/* Messages */}
+          <ScrollArea className="h-96 sm:h-[500px] p-4">
+            <div className="space-y-4">
+              {messages.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">
+                    {selectedCoach?.avatar}
+                  </div>
+                  <h3 className="font-semibold text-gray-800 mb-2">
+                    Bonjour ! Je suis {selectedCoach?.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {selectedCoach?.specialty} • {selectedCoach?.tone}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Comment puis-je vous aider aujourd'hui ?
+                  </p>
+                </div>
+              )}
 
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Impact Attendu
-                </h4>
-                <p className="text-green-700 text-sm">
-                  En pratiquant cet exercice, vous développerez votre {selectedRecommendation.type === 'daily_action' ? 'routine relationnelle' : 
-                    selectedRecommendation.type === 'relationship_tip' ? 'connexion émotionnelle' :
-                    selectedRecommendation.type === 'mindset_shift' ? 'perspective positive' : 'compétence pratique'}. 
-                  Les bénéfices se manifesteront à {selectedRecommendation.impact === 'immediate' ? 'court terme' : 
-                    selectedRecommendation.impact === 'short_term' ? 'moyen terme' : 'long terme'}.
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button 
-                  className="flex-1 bg-gradient-to-r from-green-500 to-blue-500"
-                  onClick={() => {
-                    // Ici on pourrait tracker l'engagement
-                    setSelectedRecommendation(null);
-                  }}
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-3 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Je m'engage à essayer (+50 XP)
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedRecommendation(null)}
-                >
-                  Plus tard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  {message.type === 'coach' && (
+                    <div className="flex-shrink-0">
+                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedCoach?.color} flex items-center justify-center text-white text-sm font-bold`}>
+                        {selectedCoach?.name.charAt(0)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={`max-w-xs sm:max-w-md ${message.type === 'user' ? 'order-first' : ''}`}>
+                    <div
+                      className={`rounded-2xl px-4 py-3 ${
+                        message.type === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <p className="text-sm">{message.content}</p>
+                    </div>
+                    
+                    {message.suggestions && (
+                      <div className="mt-2 space-y-1">
+                        {message.suggestions.map((suggestion, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className="text-xs mr-1 cursor-pointer hover:bg-indigo-50"
+                            onClick={() => handleQuickPrompt(`Comment faire : ${suggestion}`)}
+                          >
+                            {suggestion}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-gray-500 mt-1">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  
+                  {message.type === 'user' && (
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
 
-      {/* Weekly Challenge */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-green-100 rounded-full">
-              <Target className="h-8 w-8 text-green-600" />
+              {isTyping && (
+                <div className="flex gap-3 justify-start">
+                  <div className="flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${selectedCoach?.color} flex items-center justify-center text-white text-sm font-bold`}>
+                      {selectedCoach?.name.charAt(0)}
+                    </div>
+                  </div>
+                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Défi de la Semaine</h3>
-              <p className="text-gray-600">Créez une Connexion Profonde</p>
+            <div ref={messagesEndRef} />
+          </ScrollArea>
+
+          {/* Quick prompts */}
+          {messages.length === 0 && (
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Suggestions de conversation :</h4>
+              <div className="flex flex-wrap gap-2">
+                {quickPrompts.map((prompt, idx) => (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickPrompt(prompt)}
+                    className="text-xs bg-white hover:bg-indigo-50 border-gray-300"
+                  >
+                    {prompt}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Input area */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex gap-2">
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Tapez votre message..."
+                className="flex-1"
+                disabled={isTyping}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isTyping}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          
-          <p className="text-gray-700 mb-4 leading-relaxed">
-            Cette semaine, votre mission est d'avoir une conversation vraiment profonde avec quelqu'un d'important pour vous. 
-            Allez au-delà du superficiel et créez un moment de connexion authentique.
-          </p>
-          
-          <div className="bg-white p-4 rounded-lg mb-4">
-            <h4 className="font-semibold text-gray-800 mb-2">Votre approche suggérée :</h4>
-            <ul className="text-sm text-gray-700 space-y-1">
-              <li>• Choisissez un moment sans distractions</li>
-              <li>• Commencez par partager quelque chose de personnel</li>
-              <li>• Posez des questions sur leurs rêves, leurs peurs, leurs valeurs</li>
-              <li>• Écoutez avec votre cœur, pas seulement vos oreilles</li>
-            </ul>
-          </div>
-          
-          <Button className="w-full bg-gradient-to-r from-green-500 to-blue-500">
-            <Heart className="h-4 w-4 mr-2" />
-            Accepter le Défi (+200 XP)
-          </Button>
         </CardContent>
       </Card>
     </div>

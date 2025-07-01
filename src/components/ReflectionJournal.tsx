@@ -1,662 +1,528 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BookOpen, 
+  Plus, 
   Calendar, 
-  Heart,
-  Brain,
-  Lightbulb,
-  Star,
+  Heart, 
+  Brain, 
+  Target,
   TrendingUp,
-  Clock,
-  Plus,
-  Edit,
-  Trash2,
+  Sparkles,
   Search,
   Filter,
   Download,
   Share2,
-  Tag,
-  Eye
+  Star,
+  Clock,
+  Lightbulb,
+  BarChart3,
+  Smile,
+  Meh,
+  Frown
 } from 'lucide-react';
 
 interface JournalEntry {
   id: string;
+  date: Date;
   title: string;
   content: string;
-  date: string;
-  category: 'reflection' | 'gratitude' | 'challenge' | 'insight' | 'goal';
-  mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'frustrated' | 'peaceful';
+  mood: 'positive' | 'neutral' | 'negative';
+  category: 'relationship' | 'work' | 'family' | 'personal';
   tags: string[];
-  isPrivate: boolean;
   insights: string[];
-  conflictAnalyzed?: boolean;
+  goals: string[];
+  gratitude: string[];
+  challenges: string[];
 }
 
-interface ReflectionPrompt {
-  id: string;
-  question: string;
-  category: string;
-  difficulty: 'easy' | 'medium' | 'deep';
-  description: string;
+interface MoodStats {
+  positive: number;
+  neutral: number;
+  negative: number;
 }
 
 export const ReflectionJournal: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'entries' | 'prompts' | 'insights' | 'analytics'>('entries');
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'reflection' | 'gratitude' | 'challenge' | 'insight' | 'goal'>('all');
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [isWriting, setIsWriting] = useState(false);
+  const [currentEntry, setCurrentEntry] = useState<Partial<JournalEntry>>({
+    title: '',
+    content: '',
+    mood: 'neutral',
+    category: 'personal',
+    tags: [],
+    insights: [],
+    goals: [],
+    gratitude: [],
+    challenges: []
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [moodStats, setMoodStats] = useState<MoodStats>({ positive: 0, neutral: 0, negative: 0 });
 
-  const journalEntries: JournalEntry[] = [
-    {
-      id: '1',
-      title: 'Conflit résolu avec mon collègue',
-      content: 'Aujourd\'hui, j\'ai enfin pu clarifier le malentendu avec Marc. J\'ai réalisé que je n\'écoutais pas vraiment ses préoccupations. En utilisant les techniques d\'écoute active, j\'ai pu comprendre qu\'il se sentait débordé et non soutenu. Nous avons trouvé des solutions ensemble et notre relation s\'est améliorée.',
-      date: '2024-01-02',
-      category: 'reflection',
-      mood: 'happy',
-      tags: ['travail', 'communication', 'écoute active', 'résolution'],
-      isPrivate: false,
-      insights: [
-        'L\'écoute active transforme vraiment les conversations',
-        'Les conflits cachent souvent des besoins non exprimés',
-        'Prendre l\'initiative de clarifier évite l\'escalade'
-      ],
-      conflictAnalyzed: true
-    },
-    {
-      id: '2',
-      title: 'Gratitude pour ma famille',
-      content: 'Je suis reconnaissant pour le soutien constant de ma famille. Même dans les moments difficiles, ils sont là. Aujourd\'hui, ma mère m\'a appelé juste pour prendre des nouvelles, et cela m\'a rappelé à quel point ces petites attentions comptent.',
-      date: '2024-01-01',
-      category: 'gratitude',
-      mood: 'peaceful',
-      tags: ['famille', 'soutien', 'amour', 'reconnaissance'],
-      isPrivate: false,
-      insights: [
-        'Les petites attentions ont un grand impact',
-        'Exprimer sa gratitude renforce les liens',
-        'Le soutien familial est un pilier fondamental'
-      ]
-    },
-    {
-      id: '3',
-      title: 'Défi : Être plus patient avec les enfants',
-      content: 'J\'ai remarqué que je m\'impatiente facilement avec mes enfants le soir. J\'ai décidé de prendre 5 minutes de respiration consciente avant de les coucher. Cela m\'aide à être plus présent et bienveillant. Les enfants réagissent mieux quand je suis calme.',
-      date: '2023-12-30',
-      category: 'challenge',
-      mood: 'excited',
-      tags: ['parentalité', 'patience', 'respiration', 'présence'],
-      isPrivate: true,
-      insights: [
-        'La respiration consciente aide à retrouver le calme',
-        'Les enfants reflètent notre état émotionnel',
-        'Prendre soin de soi permet de mieux prendre soin des autres'
-      ]
-    },
-    {
-      id: '4',
-      title: 'Insight sur mes patterns de communication',
-      content: 'J\'ai réalisé que j\'ai tendance à couper la parole quand quelqu\'un exprime une émotion forte. C\'est probablement parce que cela me met mal à l\'aise. Je vais pratiquer l\'écoute sans intervenir et apprendre à tolérer ces moments d\'inconfort.',
-      date: '2023-12-28',
-      category: 'insight',
+  const categories = [
+    { id: 'all', label: 'Toutes', icon: BookOpen },
+    { id: 'relationship', label: 'Relations', icon: Heart },
+    { id: 'work', label: 'Travail', icon: Target },
+    { id: 'family', label: 'Famille', icon: Heart },
+    { id: 'personal', label: 'Personnel', icon: Brain }
+  ];
+
+  const moodOptions = [
+    { value: 'positive', label: 'Positif', icon: Smile, color: 'text-green-600' },
+    { value: 'neutral', label: 'Neutre', icon: Meh, color: 'text-yellow-600' },
+    { value: 'negative', label: 'Difficile', icon: Frown, color: 'text-red-600' }
+  ];
+
+  const promptQuestions = [
+    "Comment me suis-je senti aujourd'hui dans mes relations ?",
+    "Quelle situation m'a le plus marqué émotionnellement ?",
+    "Qu'ai-je appris sur moi-même récemment ?",
+    "Comment ai-je géré les conflits cette semaine ?",
+    "Quels sont mes objectifs relationnels pour demain ?"
+  ];
+
+  useEffect(() => {
+    // Simuler des entrées existantes
+    const mockEntries: JournalEntry[] = [
+      {
+        id: '1',
+        date: new Date(Date.now() - 86400000),
+        title: 'Conversation difficile avec Marie',
+        content: 'Aujourd\'hui, j\'ai eu une discussion tendue avec Marie au travail. J\'ai réalisé que je n\'écoutais pas vraiment son point de vue...',
+        mood: 'negative',
+        category: 'work',
+        tags: ['communication', 'écoute', 'travail'],
+        insights: ['Je dois améliorer mon écoute active', 'Les émotions interfèrent avec ma compréhension'],
+        goals: ['Pratiquer l\'écoute active cette semaine'],
+        gratitude: ['Marie a pris le temps de m\'expliquer son ressenti'],
+        challenges: ['Gérer mes réactions émotionnelles']
+      },
+      {
+        id: '2',
+        date: new Date(Date.now() - 172800000),
+        title: 'Moment de connexion avec mon enfant',
+        content: 'Ce soir, nous avons eu une belle conversation sur ses peurs. J\'ai utilisé la technique de validation émotionnelle...',
+        mood: 'positive',
+        category: 'family',
+        tags: ['enfant', 'écoute', 'empathie'],
+        insights: ['La validation émotionnelle fonctionne vraiment', 'Mon enfant s\'ouvre quand je ne juge pas'],
+        goals: ['Continuer ces moments privilégiés'],
+        gratitude: ['La confiance de mon enfant', 'Ce moment de connexion'],
+        challenges: []
+      }
+    ];
+
+    setEntries(mockEntries);
+    updateMoodStats(mockEntries);
+  }, []);
+
+  const updateMoodStats = (entriesList: JournalEntry[]) => {
+    const stats = entriesList.reduce((acc, entry) => {
+      acc[entry.mood]++;
+      return acc;
+    }, { positive: 0, neutral: 0, negative: 0 });
+    
+    setMoodStats(stats);
+  };
+
+  const handleSaveEntry = () => {
+    if (!currentEntry.title || !currentEntry.content) return;
+
+    const newEntry: JournalEntry = {
+      id: Date.now().toString(),
+      date: new Date(),
+      title: currentEntry.title!,
+      content: currentEntry.content!,
+      mood: currentEntry.mood!,
+      category: currentEntry.category!,
+      tags: currentEntry.tags || [],
+      insights: currentEntry.insights || [],
+      goals: currentEntry.goals || [],
+      gratitude: currentEntry.gratitude || [],
+      challenges: currentEntry.challenges || []
+    };
+
+    const updatedEntries = [newEntry, ...entries];
+    setEntries(updatedEntries);
+    updateMoodStats(updatedEntries);
+    
+    setCurrentEntry({
+      title: '',
+      content: '',
       mood: 'neutral',
-      tags: ['communication', 'écoute', 'émotions', 'patterns'],
-      isPrivate: false,
-      insights: [
-        'Nos inconforts révèlent nos zones de croissance',
-        'Couper la parole est souvent une réaction défensive',
-        'Tolérer l\'inconfort permet d\'approfondir les relations'
-      ]
-    }
-  ];
-
-  const reflectionPrompts: ReflectionPrompt[] = [
-    {
-      id: '1',
-      question: 'Décrivez une situation où vous avez fait preuve d\'empathie aujourd\'hui. Comment l\'autre personne a-t-elle réagi ?',
-      category: 'Empathie',
-      difficulty: 'easy',
-      description: 'Explorez vos moments d\'empathie quotidiens'
-    },
-    {
-      id: '2',
-      question: 'Quel est un conflit récurrent dans votre vie ? Quels patterns pouvez-vous identifier ?',
-      category: 'Conflits',
-      difficulty: 'medium',
-      description: 'Analysez vos patterns de conflit pour mieux les comprendre'
-    },
-    {
-      id: '3',
-      question: 'Si vous pouviez réécrire une conversation difficile de cette semaine, que changeriez-vous ?',
-      category: 'Communication',
-      difficulty: 'medium',
-      description: 'Réfléchissez à vos interactions pour les améliorer'
-    },
-    {
-      id: '4',
-      question: 'Quelle croyance sur les relations avez-vous remise en question récemment ?',
-      category: 'Croyances',
-      difficulty: 'deep',
-      description: 'Explorez vos croyances profondes sur les relations humaines'
-    },
-    {
-      id: '5',
-      question: 'Décrivez une personne qui vous inspire dans ses relations. Qu\'aimeriez-vous apprendre d\'elle ?',
-      category: 'Inspiration',
-      difficulty: 'easy',
-      description: 'Trouvez des modèles pour votre développement personnel'
-    }
-  ];
-
-  const getMoodEmoji = (mood: string) => {
-    switch (mood) {
-      case 'happy': return '😊';
-      case 'neutral': return '😐';
-      case 'sad': return '😢';
-      case 'excited': return '🤩';
-      case 'frustrated': return '😤';
-      case 'peaceful': return '😌';
-      default: return '😐';
-    }
+      category: 'personal',
+      tags: [],
+      insights: [],
+      goals: [],
+      gratitude: [],
+      challenges: []
+    });
+    setIsWriting(false);
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'reflection': return <Brain className="h-4 w-4" />;
-      case 'gratitude': return <Heart className="h-4 w-4" />;
-      case 'challenge': return <Star className="h-4 w-4" />;
-      case 'insight': return <Lightbulb className="h-4 w-4" />;
-      case 'goal': return <TrendingUp className="h-4 w-4" />;
-      default: return <BookOpen className="h-4 w-4" />;
-    }
+  const handleAddTag = (field: keyof JournalEntry, value: string) => {
+    if (!value.trim()) return;
+    
+    setCurrentEntry(prev => ({
+      ...prev,
+      [field]: [...(prev[field] as string[] || []), value.trim()]
+    }));
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'reflection': return 'bg-blue-100 text-blue-700';
-      case 'gratitude': return 'bg-pink-100 text-pink-700';
-      case 'challenge': return 'bg-orange-100 text-orange-700';
-      case 'insight': return 'bg-yellow-100 text-yellow-700';
-      case 'goal': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+  const handleRemoveTag = (field: keyof JournalEntry, index: number) => {
+    setCurrentEntry(prev => ({
+      ...prev,
+      [field]: (prev[field] as string[])?.filter((_, i) => i !== index) || []
+    }));
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      case 'deep': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+  const filteredEntries = entries.filter(entry => {
+    const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         entry.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         entry.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const getMoodIcon = (mood: string) => {
+    const moodOption = moodOptions.find(option => option.value === mood);
+    return moodOption ? <moodOption.icon className={`h-4 w-4 ${moodOption.color}`} /> : null;
   };
 
-  const filteredEntries = selectedCategory === 'all' 
-    ? journalEntries 
-    : journalEntries.filter(entry => entry.category === selectedCategory);
-
-  const analyticsData = {
-    totalEntries: journalEntries.length,
-    entriesThisWeek: 3,
-    mostUsedCategory: 'reflection',
-    averageMood: 'happy',
-    insightsGained: journalEntries.reduce((sum, entry) => sum + entry.insights.length, 0),
-    streakDays: 7
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="bg-gradient-to-r from-purple-50 via-blue-50 to-teal-50 border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-purple-600" />
-            Journal de Réflexion Personnel
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
+      {/* Header with stats */}
+      <Card className="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 border-amber-200 shadow-lg">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
+            Journal de Réflexion
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-gray-700 mb-4">
-            Cultivez l'introspection et suivez votre évolution personnelle grâce à la réflexion guidée, 
-            l'analyse de vos patterns et la documentation de vos insights.
-          </p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-purple-600">{analyticsData.totalEntries}</div>
-              <div className="text-sm text-gray-600">Entrées totales</div>
+        <CardContent className="space-y-4">
+          {/* Mood statistics */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-white/60 rounded-xl backdrop-blur-sm">
+              <Smile className="h-6 w-6 text-green-600 mx-auto mb-2" />
+              <div className="text-lg font-bold text-green-600">{moodStats.positive}</div>
+              <div className="text-xs text-gray-600">Moments positifs</div>
             </div>
-            <div className="bg-white p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">{analyticsData.entriesThisWeek}</div>
-              <div className="text-sm text-gray-600">Cette semaine</div>
+            <div className="text-center p-3 bg-white/60 rounded-xl backdrop-blur-sm">
+              <Meh className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
+              <div className="text-lg font-bold text-yellow-600">{moodStats.neutral}</div>
+              <div className="text-xs text-gray-600">Moments neutres</div>
             </div>
-            <div className="bg-white p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600">{analyticsData.insightsGained}</div>
-              <div className="text-sm text-gray-600">Insights</div>
-            </div>
-            <div className="bg-white p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-orange-600">{analyticsData.streakDays}</div>
-              <div className="text-sm text-gray-600">Jours de suite</div>
+            <div className="text-center p-3 bg-white/60 rounded-xl backdrop-blur-sm">
+              <Frown className="h-6 w-6 text-red-600 mx-auto mb-2" />
+              <div className="text-lg font-bold text-red-600">{moodStats.negative}</div>
+              <div className="text-xs text-gray-600">Défis</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Navigation */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="entries" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Mes Entrées
-          </TabsTrigger>
-          <TabsTrigger value="prompts" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            Prompts
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            Insights
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Analyse
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Entries Tab */}
-        <TabsContent value="entries" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('all')}
-              >
-                Toutes
-              </Button>
-              <Button
-                variant={selectedCategory === 'reflection' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('reflection')}
-                className="flex items-center gap-1"
-              >
-                <Brain className="h-3 w-3" />
-                Réflexions
-              </Button>
-              <Button
-                variant={selectedCategory === 'gratitude' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('gratitude')}
-                className="flex items-center gap-1"
-              >
-                <Heart className="h-3 w-3" />
-                Gratitude
-              </Button>
-              <Button
-                variant={selectedCategory === 'challenge' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('challenge')}
-                className="flex items-center gap-1"
-              >
-                <Star className="h-3 w-3" />
-                Défis
-              </Button>
-            </div>
-            
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Nouvelle entrée
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            {filteredEntries.map((entry) => (
-              <Card key={entry.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => setSelectedEntry(entry)}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-800">{entry.title}</h3>
-                        <span className="text-lg">{getMoodEmoji(entry.mood)}</span>
-                        {entry.conflictAnalyzed && (
-                          <Badge className="bg-blue-100 text-blue-700 text-xs">
-                            <Eye className="h-3 w-3 mr-1" />
-                            Analysé
-                          </Badge>
-                        )}
-                        {entry.isPrivate && (
-                          <Badge variant="outline" className="text-xs">
-                            Privé
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {entry.content}
-                      </p>
-                      
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className={getCategoryColor(entry.category)}>
-                          {getCategoryIcon(entry.category)}
-                          <span className="ml-1 capitalize">{entry.category}</span>
-                        </Badge>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(entry.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      
-                      <div className="flex gap-1 flex-wrap">
-                        {entry.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {entry.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{entry.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Share2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {entry.insights.length > 0 && (
-                    <div className="bg-yellow-50 p-3 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-1 flex items-center gap-1">
-                        <Lightbulb className="h-3 w-3" />
-                        Insights clés
-                      </h4>
-                      <p className="text-sm text-yellow-700">
-                        {entry.insights[0]}
-                        {entry.insights.length > 1 && (
-                          <span className="text-yellow-600 ml-1">
-                            (+{entry.insights.length - 1} autres)
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Prompts Tab */}
-        <TabsContent value="prompts" className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            {reflectionPrompts.map((prompt) => (
-              <Card key={prompt.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-100 rounded-full text-purple-600">
-                      <Lightbulb className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-purple-100 text-purple-700">
-                          {prompt.category}
-                        </Badge>
-                        <Badge className={getDifficultyColor(prompt.difficulty)}>
-                          {prompt.difficulty}
-                        </Badge>
-                      </div>
-                      
-                      <p className="font-medium text-gray-800 mb-2 leading-relaxed">
-                        {prompt.question}
-                      </p>
-                      
-                      <p className="text-sm text-gray-600 mb-3">
-                        {prompt.description}
-                      </p>
-                      
-                      <Button size="sm" className="w-full">
-                        <Plus className="h-3 w-3 mr-1" />
-                        Réfléchir à cette question
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Insights Tab */}
-        <TabsContent value="insights" className="space-y-4">
-          <div className="space-y-4">
-            {journalEntries.map((entry) => (
-              entry.insights.length > 0 && (
-                <Card key={entry.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
-                        <Lightbulb className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-gray-800">{entry.title}</h4>
-                          <Badge className={getCategoryColor(entry.category)}>
-                            {entry.category}
-                          </Badge>
-                          <span className="text-xs text-gray-500">
-                            {new Date(entry.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {entry.insights.map((insight, index) => (
-                            <div key={index} className="bg-yellow-50 p-3 rounded-lg">
-                              <p className="text-sm text-yellow-800 leading-relaxed">
-                                {insight}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  Statistiques de Réflexion
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{analyticsData.totalEntries}</div>
-                    <div className="text-sm text-gray-600">Entrées totales</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{analyticsData.entriesThisWeek}</div>
-                    <div className="text-sm text-gray-600">Cette semaine</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{analyticsData.insightsGained}</div>
-                    <div className="text-sm text-gray-600">Insights</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">{analyticsData.streakDays}</div>
-                    <div className="text-sm text-gray-600">Jours de suite</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-pink-600" />
-                  Humeur et Bien-être
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center mb-4">
-                    <div className="text-4xl mb-2">{getMoodEmoji(analyticsData.averageMood)}</div>
-                    <p className="text-sm text-gray-600">Humeur moyenne</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Entrées positives</span>
-                      <span className="text-sm font-medium">75%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Catégorie favorite</span>
-                      <span className="text-sm font-medium capitalize">{analyticsData.mostUsedCategory}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Moyenne insights/entrée</span>
-                      <span className="text-sm font-medium">
-                        {(analyticsData.insightsGained / analyticsData.totalEntries).toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Modal de détail d'entrée */}
-      {selectedEntry && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {getCategoryIcon(selectedEntry.category)}
-                {selectedEntry.title}
-                <span className="text-lg">{getMoodEmoji(selectedEntry.mood)}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Badge className={getCategoryColor(selectedEntry.category)}>
-                  {selectedEntry.category}
-                </Badge>
-                <span className="text-sm text-gray-500 flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {new Date(selectedEntry.date).toLocaleDateString()}
-                </span>
-                {selectedEntry.isPrivate && (
-                  <Badge variant="outline">Privé</Badge>
-                )}
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {selectedEntry.content}
-                </p>
-              </div>
-              
-              {selectedEntry.insights.length > 0 && (
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4" />
-                    Insights de cette réflexion
-                  </h4>
-                  <ul className="space-y-2">
-                    {selectedEntry.insights.map((insight, index) => (
-                      <li key={index} className="text-sm text-yellow-700 flex items-start gap-2">
-                        <Star className="h-3 w-3 text-yellow-600 mt-0.5 flex-shrink-0" />
-                        <span>{insight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              <div className="flex gap-1 flex-wrap">
-                {selectedEntry.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Modifier
-                </Button>
-                <Button variant="outline">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Partager
-                </Button>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exporter
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedEntry(null)}
-                >
-                  Fermer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Widget d'encouragement */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <BookOpen className="h-8 w-8 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Continuez votre voyage intérieur</h3>
-              <p className="text-gray-600">La réflexion régulière transforme votre vie</p>
-            </div>
-          </div>
-          
-          <p className="text-gray-700 mb-4 leading-relaxed">
-            Vous avez déjà écrit {analyticsData.totalEntries} entrées et gagné {analyticsData.insightsGained} insights précieux. 
-            Chaque réflexion vous rapproche de la personne que vous voulez devenir.
-          </p>
-          
-          <div className="flex gap-3">
-            <Button className="bg-gradient-to-r from-blue-500 to-purple-500">
+          {/* Quick actions */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              onClick={() => setIsWriting(true)}
+              className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle Réflexion
             </Button>
-            <Button variant="outline">
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Prompt Aléatoire
+            <Button variant="outline" size="sm" className="border-amber-300">
+              <Download className="h-4 w-4 mr-2" />
+              Exporter
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Writing interface */}
+      {isWriting && (
+        <Card className="bg-white shadow-lg border-slate-200 animate-scale-in">
+          <CardHeader>
+            <CardTitle className="text-lg">Nouvelle Réflexion</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                placeholder="Titre de votre réflexion"
+                value={currentEntry.title}
+                onChange={(e) => setCurrentEntry(prev => ({ ...prev, title: e.target.value }))}
+              />
+              <select
+                value={currentEntry.category}
+                onChange={(e) => setCurrentEntry(prev => ({ ...prev, category: e.target.value as any }))}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                {categories.filter(cat => cat.id !== 'all').map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {moodOptions.map(mood => (
+                <Button
+                  key={mood.value}
+                  variant={currentEntry.mood === mood.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentEntry(prev => ({ ...prev, mood: mood.value as any }))}
+                  className="flex items-center gap-2"
+                >
+                  <mood.icon className={`h-4 w-4 ${mood.color}`} />
+                  {mood.label}
+                </Button>
+              ))}
+            </div>
+
+            <Textarea
+              placeholder="Écrivez votre réflexion..."
+              value={currentEntry.content}
+              onChange={(e) => setCurrentEntry(prev => ({ ...prev, content: e.target.value }))}
+              className="min-h-32"
+            />
+
+            {/* Structured reflection */}
+            <Tabs defaultValue="insights" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="insights">Insights</TabsTrigger>
+                <TabsTrigger value="goals">Objectifs</TabsTrigger>
+                <TabsTrigger value="gratitude">Gratitude</TabsTrigger>
+                <TabsTrigger value="challenges">Défis</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="insights" className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Qu'avez-vous appris sur vous-même ?"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddTag('insights', e.currentTarget.value);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentEntry.insights?.map((insight, idx) => (
+                    <Badge key={idx} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveTag('insights', idx)}>
+                      {insight} ×
+                    </Badge>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="goals" className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Quel objectif vous fixez-vous ?"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddTag('goals', e.currentTarget.value);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentEntry.goals?.map((goal, idx) => (
+                    <Badge key={idx} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveTag('goals', idx)}>
+                      {goal} ×
+                    </Badge>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="gratitude" className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Pour quoi êtes-vous reconnaissant ?"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddTag('gratitude', e.currentTarget.value);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentEntry.gratitude?.map((item, idx) => (
+                    <Badge key={idx} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveTag('gratitude', idx)}>
+                      {item} ×
+                    </Badge>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="challenges" className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Quel défi avez-vous rencontré ?"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddTag('challenges', e.currentTarget.value);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentEntry.challenges?.map((challenge, idx) => (
+                    <Badge key={idx} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveTag('challenges', idx)}>
+                      {challenge} ×
+                    </Badge>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex gap-2">
+              <Button onClick={handleSaveEntry} className="flex-1 bg-amber-600 hover:bg-amber-700">
+                Enregistrer
+              </Button>
+              <Button variant="outline" onClick={() => setIsWriting(false)}>
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Search and filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Rechercher dans vos réflexions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto">
+          {categories.map(category => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category.id)}
+              className="whitespace-nowrap"
+            >
+              <category.icon className="h-4 w-4 mr-2" />
+              {category.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Entries list */}
+      <div className="space-y-4">
+        {filteredEntries.map((entry) => (
+          <Card key={entry.id} className="bg-white hover:shadow-lg transition-shadow duration-300 border-slate-200">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    {getMoodIcon(entry.mood)}
+                    <h3 className="font-semibold text-gray-800">{entry.title}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                    <Calendar className="h-4 w-4" />
+                    {formatDate(entry.date)}
+                    <Badge variant="outline" className="text-xs">
+                      {categories.find(cat => cat.id === entry.category)?.label}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-gray-700 text-sm mb-4 leading-relaxed">
+                {entry.content.length > 200 ? `${entry.content.substring(0, 200)}...` : entry.content}
+              </p>
+
+              {/* Tags and structured data */}
+              <div className="space-y-3">
+                {entry.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {entry.tags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {entry.insights.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-purple-700 mb-1">
+                      <Lightbulb className="h-3 w-3" />
+                      Insights
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {entry.insights.map((insight, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs border-purple-200 text-purple-700">
+                          {insight}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {entry.goals.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-blue-700 mb-1">
+                      <Target className="h-3 w-3" />
+                      Objectifs
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {entry.goals.map((goal, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs border-blue-200 text-blue-700">
+                          {goal}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {filteredEntries.length === 0 && (
+          <div className="text-center py-12">
+            <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2">
+              {searchTerm ? 'Aucune réflexion trouvée' : 'Commencez votre journal'}
+            </h3>
+            <p className="text-gray-500 mb-4">
+              {searchTerm ? 'Essayez avec d\'autres mots-clés' : 'Partagez vos réflexions sur vos relations et votre développement personnel'}
+            </p>
+            {!searchTerm && (
+              <Button onClick={() => setIsWriting(true)} className="bg-amber-600 hover:bg-amber-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Écrire ma première réflexion
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
