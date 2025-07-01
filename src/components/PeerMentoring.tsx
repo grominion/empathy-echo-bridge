@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,8 @@ import {
   UserPlus,
   MessageCircle,
   Video,
-  Phone
+  Phone,
+  Plus
 } from 'lucide-react';
 
 interface MentorProfile {
@@ -486,7 +486,7 @@ export const PeerMentoring: React.FC = () => {
                   <h4 className="font-semibold text-gray-800 mb-2">Prérequis</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• Niveau 5 minimum</li>
-                    <li>• Score d'empathie > 70%</li>
+                    <li>• Score d'empathie &gt; 70%</li>
                     <li>• 10 analyses complétées</li>
                     <li>• Participation active communauté</li>
                     <li>• Formation mentor (2h en ligne)</li>
