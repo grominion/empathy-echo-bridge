@@ -10,6 +10,12 @@ import { CommunityHub } from '@/components/CommunityHub';
 import { ReflectionJournal } from '@/components/ReflectionJournal';
 import { PersonalInsights } from '@/components/PersonalInsights';
 import { MotivationNotifications } from '@/components/MotivationNotifications';
+import { PeerMentoring } from '@/components/PeerMentoring';
+import { PersonalRecommendations } from '@/components/PersonalRecommendations';
+import { GuidedMeditation } from '@/components/GuidedMeditation';
+import { HabitTracker } from '@/components/HabitTracker';
+import { VoiceEmotionAnalysis } from '@/components/VoiceEmotionAnalysis';
+import { AchievementSystem } from '@/components/AchievementSystem';
 import { 
   Trophy, 
   Target, 
@@ -18,7 +24,13 @@ import {
   Brain,
   MessageSquare,
   Sparkles,
-  Heart
+  Heart,
+  Lightbulb,
+  Mic,
+  Calendar,
+  Award,
+  Headphones,
+  CheckSquare
 } from 'lucide-react';
 
 const PersonalDevelopment = () => {
@@ -50,26 +62,42 @@ const PersonalDevelopment = () => {
 
           {/* Navigation Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10 mb-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                <span className="hidden sm:inline">Vue d'ensemble</span>
+                <span className="hidden sm:inline">Vue</span>
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                <span className="hidden sm:inline">Suggestions</span>
               </TabsTrigger>
               <TabsTrigger value="challenges" className="flex items-center gap-2">
                 <Target className="h-4 w-4" />
                 <span className="hidden sm:inline">Défis</span>
               </TabsTrigger>
-              <TabsTrigger value="gamification" className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline">Niveaux</span>
+              <TabsTrigger value="habits" className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Habitudes</span>
+              </TabsTrigger>
+              <TabsTrigger value="meditation" className="flex items-center gap-2">
+                <Headphones className="h-4 w-4" />
+                <span className="hidden sm:inline">Méditation</span>
+              </TabsTrigger>
+              <TabsTrigger value="voice" className="flex items-center gap-2">
+                <Mic className="h-4 w-4" />
+                <span className="hidden sm:inline">Voix</span>
+              </TabsTrigger>
+              <TabsTrigger value="mentoring" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Mentorat</span>
+              </TabsTrigger>
+              <TabsTrigger value="achievements" className="flex items-center gap-2">
+                <Award className="h-4 w-4" />
+                <span className="hidden sm:inline">Succès</span>
               </TabsTrigger>
               <TabsTrigger value="coach" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Coach IA</span>
-              </TabsTrigger>
-              <TabsTrigger value="community" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Communauté</span>
+                <span className="hidden sm:inline">Coach</span>
               </TabsTrigger>
               <TabsTrigger value="journal" className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
@@ -79,40 +107,52 @@ const PersonalDevelopment = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid lg:grid-cols-3 gap-6 mb-8">
+              <div className="grid lg:grid-cols-4 gap-6 mb-8">
                 <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setActiveTab('challenges')}>
-                  <CardContent className="p-6 text-center">
-                    <Target className="h-12 w-12 mx-auto mb-4 text-purple-600" />
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">Défis Quotidiens</h3>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Challenges personnalisés pour développer votre empathie et vos relations
+                      onClick={() => setActiveTab('recommendations')}>
+                  <CardContent className="p-4 text-center">
+                    <Lightbulb className="h-10 w-10 mx-auto mb-3 text-purple-600" />
+                    <h3 className="font-bold text-sm text-gray-800 mb-2">Suggestions IA</h3>
+                    <p className="text-gray-600 text-xs mb-3">
+                      Recommandations personnalisées
                     </p>
-                    <Button variant="outline" size="sm">Voir mes défis</Button>
+                    <Button variant="outline" size="sm">Explorer</Button>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setActiveTab('coach')}>
-                  <CardContent className="p-6 text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-600" />
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">Coach Personnel IA</h3>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Conseils personnalisés et accompagnement adapté à votre parcours
+                      onClick={() => setActiveTab('habits')}>
+                  <CardContent className="p-4 text-center">
+                    <CheckSquare className="h-10 w-10 mx-auto mb-3 text-green-600" />
+                    <h3 className="font-bold text-sm text-gray-800 mb-2">Suivi Habitudes</h3>
+                    <p className="text-gray-600 text-xs mb-3">
+                      Développez jour après jour
                     </p>
-                    <Button variant="outline" size="sm">Parler à mon coach</Button>
+                    <Button variant="outline" size="sm">Commencer</Button>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setActiveTab('community')}>
-                  <CardContent className="p-6 text-center">
-                    <Users className="h-12 w-12 mx-auto mb-4 text-orange-600" />
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">Communauté</h3>
-                    <p className="text-gray-600 text-sm mb-4">
-                      Partagez, apprenez et grandissez avec d'autres personnes bienveillantes
+                      onClick={() => setActiveTab('meditation')}>
+                  <CardContent className="p-4 text-center">
+                    <Headphones className="h-10 w-10 mx-auto mb-3 text-orange-600" />
+                    <h3 className="font-bold text-sm text-gray-800 mb-2">Méditation</h3>
+                    <p className="text-gray-600 text-xs mb-3">
+                      Sessions guidées
                     </p>
-                    <Button variant="outline" size="sm">Rejoindre</Button>
+                    <Button variant="outline" size="sm">Méditer</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setActiveTab('voice')}>
+                  <CardContent className="p-4 text-center">
+                    <Mic className="h-10 w-10 mx-auto mb-3 text-indigo-600" />
+                    <h3 className="font-bold text-sm text-gray-800 mb-2">Analyse Vocale</h3>
+                    <p className="text-gray-600 text-xs mb-3">
+                      Émotions par la voix
+                    </p>
+                    <Button variant="outline" size="sm">Analyser</Button>
                   </CardContent>
                 </Card>
               </div>
@@ -120,24 +160,44 @@ const PersonalDevelopment = () => {
               <PersonalInsights />
             </TabsContent>
 
+            {/* Recommendations Tab */}
+            <TabsContent value="recommendations">
+              <PersonalRecommendations />
+            </TabsContent>
+
             {/* Challenges Tab */}
             <TabsContent value="challenges">
               <PersonalGrowthModule />
             </TabsContent>
 
-            {/* Gamification Tab */}
-            <TabsContent value="gamification">
-              <GamificationSystem />
+            {/* Habits Tab */}
+            <TabsContent value="habits">
+              <HabitTracker />
+            </TabsContent>
+
+            {/* Meditation Tab */}
+            <TabsContent value="meditation">
+              <GuidedMeditation />
+            </TabsContent>
+
+            {/* Voice Analysis Tab */}
+            <TabsContent value="voice">
+              <VoiceEmotionAnalysis />
+            </TabsContent>
+
+            {/* Peer Mentoring Tab */}
+            <TabsContent value="mentoring">
+              <PeerMentoring />
+            </TabsContent>
+
+            {/* Achievements Tab */}
+            <TabsContent value="achievements">
+              <AchievementSystem />
             </TabsContent>
 
             {/* Coach Tab */}
             <TabsContent value="coach">
               <PersonalCoach />
-            </TabsContent>
-
-            {/* Community Tab */}
-            <TabsContent value="community">
-              <CommunityHub />
             </TabsContent>
 
             {/* Journal Tab */}
