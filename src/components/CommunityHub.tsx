@@ -20,7 +20,8 @@ import {
   Send,
   Plus,
   Filter,
-  Search
+  Search,
+  Calendar
 } from 'lucide-react';
 
 interface ForumPost {
