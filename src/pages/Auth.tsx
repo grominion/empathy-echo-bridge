@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Mail, Lock, User, Heart, Brain } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Heart, Brain, Chrome } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Auth: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,8 +19,10 @@ const Auth: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -49,13 +52,32 @@ const Auth: React.FC = () => {
         setError(result.error.message);
       } else if (isSignUp) {
         setError('');
-        // Show success message for signup
-        alert('Compte créé avec succès ! Vérifiez votre email pour confirmer votre compte.');
+        if (result.needsEmailConfirmation) {
+          toast({
+            title: "Compte créé avec succès ! 🎉",
+            description: "Vérifiez votre email pour confirmer votre compte avant de vous connecter.",
+            duration: 6000,
+          });
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        setError(result.error.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la connexion avec Google');
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -185,6 +207,36 @@ const Auth: React.FC = () => {
                   )}
                 </Button>
               </form>
+
+              {/* Google Sign In */}
+              <div className="mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">Ou</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  variant="outline"
+                  className="w-full mt-4 h-12 border-gray-300 hover:bg-gray-50"
+                >
+                  {isGoogleLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      Connexion...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Chrome className="h-5 w-5 text-red-500" />
+                      Continuer avec Google
+                    </div>
+                  )}
+                </Button>
+              </div>
 
               {/* Features preview */}
               <div className="mt-8 pt-6 border-t border-gray-100">

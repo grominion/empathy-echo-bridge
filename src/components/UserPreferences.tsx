@@ -43,12 +43,20 @@ export const UserPreferences: React.FC = () => {
 
   const fetchPreferences = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('user_preferences')
         .select('*')
+        .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching preferences:', error);
+        return;
+      }
+      
       if (data) {
         setPreferences({
           theme: data.theme || 'light',
@@ -69,11 +77,16 @@ export const UserPreferences: React.FC = () => {
   const savePreferences = async () => {
     setIsLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Utilisateur non authentifié');
+      }
+
       const { error } = await supabase
         .from('user_preferences')
         .upsert({
           ...preferences,
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: user.id
         });
 
       if (error) throw error;
