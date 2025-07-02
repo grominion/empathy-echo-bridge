@@ -5,8 +5,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Navigation } from "./components/Navigation";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Result from "./pages/Result";
 import Conversation from "./pages/Conversation";
 import Admin from "./pages/Admin";
@@ -23,26 +26,54 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen bg-background">
-              <Navigation />
-              <main className="container mx-auto px-4 py-8">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/conversation" element={<Conversation />} />
-                  <Route path="/result" element={<Result />} />
-                  <Route path="/history" element={<ConversationHistory />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/personal-development" element={<PersonalDevelopment />} />
-                  <Route path="/preferences" element={<UserPreferences />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-            </div>
-          </BrowserRouter>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <div className="min-h-screen bg-background">
+                <Navigation />
+                <main className="container mx-auto px-4 py-8">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/conversation" element={<Conversation />} />
+                    <Route path="/result" element={<Result />} />
+                    
+                    {/* Protected Routes */}
+                    <Route path="/history" element={
+                      <ProtectedRoute>
+                        <ConversationHistory />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/personal-development" element={
+                      <ProtectedRoute>
+                        <PersonalDevelopment />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/preferences" element={
+                      <ProtectedRoute>
+                        <UserPreferences />
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* Admin Only Routes */}
+                    <Route path="/admin" element={
+                      <ProtectedRoute adminOnly>
+                        <Admin />
+                      </ProtectedRoute>
+                    } />
+                    
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+              </div>
+            </BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
