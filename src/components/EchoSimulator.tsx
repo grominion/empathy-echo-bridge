@@ -6,6 +6,7 @@ import { ShareExportModal } from './ShareExportModal';
 import { MotivationNotifications } from './MotivationNotifications';
 import { analyzeConflict } from '../utils/empathyAnalyzer';
 import { StartNewConversationFab } from './StartNewConversationFab';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Zap, TrendingUp, Clock } from 'lucide-react';
@@ -38,6 +39,7 @@ export const EchoSimulator: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleAnalyze = async (conflictText: string) => {
     console.log("Text Conflict Description Received!");
@@ -117,19 +119,42 @@ export const EchoSimulator: React.FC = () => {
       title: "Conflit Express ⚡",
       description: "Analyse rapide en 30 secondes",
       icon: <Zap className="h-5 w-5" />,
-      action: () => handleAnalyze("Mode analyse express activé")
+      action: () => {
+        const template = "Je viens d'avoir une dispute avec un proche. J'aimerais comprendre son point de vue et trouver une solution rapidement. Comment puis-je l'aborder de manière constructive ?";
+        setSelectedTemplate(template);
+        // Auto-scroll to input
+        setTimeout(() => {
+          const inputElement = document.querySelector('textarea');
+          inputElement?.focus();
+          inputElement?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     },
     {
       title: "Perspective Alternative 🔄",
       description: "Voir le point de vue de l'autre",
       icon: <TrendingUp className="h-5 w-5" />,
-      action: () => console.log("Mode perspective alternative")
+      action: () => {
+        const template = "J'ai eu un désaccord avec quelqu'un et je n'arrive pas à comprendre leur réaction. Pouvez-vous m'aider à voir les choses de leur perspective et identifier ce qui pourrait les avoir blessé ou frustrés ?";
+        setSelectedTemplate(template);
+        setTimeout(() => {
+          const inputElement = document.querySelector('textarea');
+          inputElement?.focus();
+          inputElement?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     },
     {
       title: "Historique Récent 📚",
       description: "Revoir vos dernières analyses",
       icon: <Clock className="h-5 w-5" />,
-      action: () => navigate('/history')
+      action: () => {
+        if (user) {
+          navigate('/history');
+        } else {
+          navigate('/auth');
+        }
+      }
     }
   ];
 
@@ -183,6 +208,7 @@ export const EchoSimulator: React.FC = () => {
         onAnalyze={handleAnalyze}
         onVoiceAnalyze={handleVoiceAnalyze}
         isAnalyzing={isLoading}
+        selectedTemplate={selectedTemplate}
       />
 
       {/* Message d'erreur */}
@@ -218,8 +244,11 @@ export const EchoSimulator: React.FC = () => {
             Chaque analyse vous rend plus empathique et améliore vos relations.
           </p>
           <div className="flex justify-center gap-2">
-            <Button size="sm" onClick={() => navigate('/dashboard')}>
-              Voir mes progrès
+            <Button 
+              size="sm" 
+              onClick={() => user ? navigate('/dashboard') : navigate('/auth')}
+            >
+              {user ? 'Voir mes progrès' : 'Créer un compte gratuit'}
             </Button>
             <Button 
               variant="outline" 

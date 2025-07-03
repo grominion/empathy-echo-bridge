@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import { ConversationHistory } from "./components/ConversationHistory";
 import { UserPreferences } from "./components/UserPreferences";
 import { Dashboard } from "./components/Dashboard";
+import { GuestModeInfo } from "./components/GuestModeInfo";
 import PersonalDevelopment from './pages/PersonalDevelopment';
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/guest-info" element={<GuestModeInfo />} />
                     <Route path="/conversation" element={<Conversation />} />
                     <Route path="/result" element={<Result />} />
                     

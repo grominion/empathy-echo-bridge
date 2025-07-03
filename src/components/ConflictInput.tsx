@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,16 +9,23 @@ interface ConflictInputProps {
   onAnalyze: (conflictText: string) => void;
   onVoiceAnalyze: (audioData: string) => void;
   isAnalyzing: boolean;
+  selectedTemplate?: string;
 }
 
 export const ConflictInput: React.FC<ConflictInputProps> = ({
   onAnalyze,
   onVoiceAnalyze,
-  isAnalyzing
+  isAnalyzing,
+  selectedTemplate = ''
 }) => {
-  const [conflictText, setConflictText] = useState('');
+  const [conflictText, setConflictText] = useState(selectedTemplate);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Update text when template changes
+  useEffect(() => {
+    setConflictText(selectedTemplate);
+  }, [selectedTemplate]);
 
   // Voice input logic here (adapted for inline mic button)
   const handleStartRecording = async () => {
