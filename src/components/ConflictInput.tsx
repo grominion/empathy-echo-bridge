@@ -10,18 +10,21 @@ interface ConflictInputProps {
   onVoiceAnalyze: (audioData: string) => void;
   isAnalyzing: boolean;
   selectedTemplate?: string;
+  language: string;
+  onLanguageChange: (lang: string) => void;
 }
 
 export const ConflictInput: React.FC<ConflictInputProps> = ({
   onAnalyze,
   onVoiceAnalyze,
   isAnalyzing,
-  selectedTemplate = ''
+  selectedTemplate = '',
+  language,
+  onLanguageChange
 }) => {
   const [conflictText, setConflictText] = useState(selectedTemplate);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [language, setLanguage] = useState('en');
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   // Update text when template changes
@@ -29,7 +32,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
     setConflictText(selectedTemplate);
   }, [selectedTemplate]);
 
-  const getText = (key: string) => {
+  const getText = (key: string): string => {
     const texts = {
       en: {
         title: "Tell ECHO About Your Conflict",
@@ -42,14 +45,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
         processing: "Processing audio...",
         analyzing2: "Analyzing with voice...",
         whatEcho: "What ECHO Will Analyze",
-        tip: "💡 Tip: Press Ctrl+Enter to quickly submit your conflict description",
-        features: [
-          "• The other person's perspective and underlying motivations",
-          "• Emotional bridges to help you connect with them", 
-          "• Strategic communication approaches",
-          "• Potential manipulative arguments and how to counter them",
-          "• Voice tone and emotional analysis for deeper insights"
-        ]
+        tip: "💡 Tip: Press Ctrl+Enter to quickly submit your conflict description"
       },
       fr: {
         title: "Parlez à ECHO de votre conflit",
@@ -62,17 +58,30 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
         processing: "Traitement audio...",
         analyzing2: "Analyse avec la voix...",
         whatEcho: "Ce qu'ECHO va analyser",
-        tip: "💡 Conseil : Appuyez sur Ctrl+Entrée pour soumettre rapidement votre description",
-        features: [
-          "• La perspective de l'autre personne et ses motivations profondes",
-          "• Des ponts émotionnels pour vous aider à vous connecter",
-          "• Des approches de communication stratégiques", 
-          "• Les arguments manipulateurs potentiels et comment les contrer",
-          "• Analyse du ton vocal et émotionnel pour des insights plus profonds"
-        ]
+        tip: "💡 Conseil : Appuyez sur Ctrl+Entrée pour soumettre rapidement votre description"
       }
     };
     return texts[language as keyof typeof texts]?.[key as keyof typeof texts['en']] || texts.en[key as keyof typeof texts['en']];
+  };
+
+  const getFeatures = (): string[] => {
+    const features = {
+      en: [
+        "• The other person's perspective and underlying motivations",
+        "• Emotional bridges to help you connect with them", 
+        "• Strategic communication approaches",
+        "• Potential manipulative arguments and how to counter them",
+        "• Voice tone and emotional analysis for deeper insights"
+      ],
+      fr: [
+        "• La perspective de l'autre personne et ses motivations profondes",
+        "• Des ponts émotionnels pour vous aider à vous connecter",
+        "• Des approches de communication stratégiques", 
+        "• Les arguments manipulateurs potentiels et comment les contrer",
+        "• Analyse du ton vocal et émotionnel pour des insights plus profonds"
+      ]
+    };
+    return features[language as keyof typeof features] || features.en;
   };
 
   const handleStartRecording = async () => {
@@ -147,7 +156,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setLanguage(language === 'en' ? 'fr' : 'en')}
+          onClick={() => onLanguageChange(language === 'en' ? 'fr' : 'en')}
           className="flex items-center gap-2"
         >
           <Languages className="w-4 h-4" />
@@ -239,7 +248,7 @@ export const ConflictInput: React.FC<ConflictInputProps> = ({
               {getText('whatEcho')}
             </h4>
             <ul className="text-sm text-slate-700 space-y-2">
-              {getText('features').map((feature: string, index: number) => (
+              {getFeatures().map((feature: string, index: number) => (
                 <li key={index} className={index === 4 ? "text-blue-600 font-medium" : ""}>
                   {feature}
                 </li>
