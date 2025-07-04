@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ConflictInput } from './ConflictInput';
@@ -9,7 +10,8 @@ import { StartNewConversationFab } from './StartNewConversationFab';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Zap, TrendingUp, Clock } from 'lucide-react';
+import { Sparkles, Zap, TrendingUp, Clock, Heart, Users } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export interface AnalysisResult {
   otherPerspective?: string;
@@ -40,10 +42,20 @@ export const EchoSimulator: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleAnalyze = async (conflictText: string) => {
-    console.log("Text Conflict Description Received!");
+    console.log("Starting conflict analysis...");
     console.log("Text length:", conflictText.length);
+
+    if (!conflictText.trim()) {
+      toast({
+        title: "Error",
+        description: "Please describe your conflict before analyzing.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setError(null);
     setIsLoading(true);
@@ -51,7 +63,9 @@ export const EchoSimulator: React.FC = () => {
     try {
       const result = await analyzeConflict(conflictText, false);
       
-      // Sauvegarder pour le partage
+      console.log("Analysis completed:", result);
+      
+      // Save for sharing
       setLastAnalysis({
         result,
         description: conflictText,
@@ -60,16 +74,22 @@ export const EchoSimulator: React.FC = () => {
       
       navigate('/result', { state: { analysis: result } });
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      const errorMessage = e instanceof Error ? e.message : 'An error occurred during analysis';
       setError(errorMessage);
-      console.error("A critical error occurred:", e);
+      console.error("Analysis error:", e);
+      
+      toast({
+        title: "Analysis Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVoiceAnalyze = async (audioData: string) => {
-    console.log("Voice Conflict Data Received!");
+    console.log("Starting voice analysis...");
     console.log("Audio data length:", audioData.length);
 
     setError(null);
@@ -79,148 +99,195 @@ export const EchoSimulator: React.FC = () => {
       const { analyzeVoiceConflict } = await import('../utils/empathyAnalyzer');
       const result = await analyzeVoiceConflict(audioData);
       
-      // Sauvegarder pour le partage
+      console.log("Voice analysis completed:", result);
+      
+      // Save for sharing
       setLastAnalysis({
         result,
-        description: audioData,
-        title: 'Analyse vocale'
+        description: 'Voice analysis',
+        title: 'Voice Conflict Analysis'
       });
       
       navigate('/result', { state: { analysis: result } });
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+      const errorMessage = e instanceof Error ? e.message : 'Voice analysis failed';
       setError(errorMessage);
       console.error("Voice analysis error:", e);
+      
+      toast({
+        title: "Voice Analysis Failed", 
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleStartNewConversation = () => {
-    if (window.confirm('Êtes-vous sûr ? Cela effacera l\'analyse actuelle.')) {
-      setError(null);
-      setIsLoading(false);
-      setSelectedTemplate('');
-      setResetKey(prev => prev + 1);
-    }
+    setError(null);
+    setIsLoading(false);
+    setSelectedTemplate('');
+    setResetKey(prev => prev + 1);
   };
 
-  const handleSuggestionSelect = (suggestion: any) => {
-    if (suggestion.type === 'template') {
-      setSelectedTemplate(suggestion.content);
-    } else if (suggestion.type === 'quick_analysis') {
-      // Activer le mode analyse rapide
-      console.log("Mode analyse rapide activé");
-    }
-  };
-
-  const quickAnalysisOptions = [
+  const quickTemplates = [
     {
-      title: "Conflit Express ⚡",
-      description: "Analyse rapide en 30 secondes",
-      icon: <Zap className="h-5 w-5" />,
-      action: () => {
-        const template = "Je viens d'avoir une dispute avec un proche. J'aimerais comprendre son point de vue et trouver une solution rapidement. Comment puis-je l'aborder de manière constructive ?";
-        setSelectedTemplate(template);
-        // Auto-scroll to input
-        setTimeout(() => {
-          const inputElement = document.querySelector('textarea');
-          inputElement?.focus();
-          inputElement?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
+      title: "Express Conflict ⚡",
+      description: "Quick 30-second analysis",
+      icon: <Zap className="h-6 w-6" />,
+      template: "I just had a disagreement with someone close to me. I'd like to understand their perspective and find a solution quickly. How can I approach them constructively?"
     },
     {
-      title: "Perspective Alternative 🔄",
-      description: "Voir le point de vue de l'autre",
-      icon: <TrendingUp className="h-5 w-5" />,
-      action: () => {
-        const template = "J'ai eu un désaccord avec quelqu'un et je n'arrive pas à comprendre leur réaction. Pouvez-vous m'aider à voir les choses de leur perspective et identifier ce qui pourrait les avoir blessé ou frustrés ?";
-        setSelectedTemplate(template);
-        setTimeout(() => {
-          const inputElement = document.querySelector('textarea');
-          inputElement?.focus();
-          inputElement?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    },
-    {
-      title: "Historique Récent 📚",
-      description: "Revoir vos dernières analyses",
-      icon: <Clock className="h-5 w-5" />,
-      action: () => {
-        if (user) {
-          navigate('/history');
-        } else {
-          navigate('/auth');
-        }
-      }
+      title: "Alternative Perspective 🔄", 
+      description: "See the other person's viewpoint",
+      icon: <TrendingUp className="h-6 w-6" />,
+      template: "I had a disagreement with someone and I can't understand their reaction. Can you help me see things from their perspective and identify what might have hurt or frustrated them?"
     }
   ];
 
+  const handleTemplateSelect = (template: string) => {
+    setSelectedTemplate(template);
+    // Auto-scroll to input
+    setTimeout(() => {
+      const inputElement = document.querySelector('textarea');
+      inputElement?.focus();
+      inputElement?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
-    <div className="space-y-8 relative">
-      {/* Notifications de motivation */}
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Notifications */}
       <MotivationNotifications />
       
-      {/* FAB pour nouvelle conversation */}
+      {/* FAB */}
       <StartNewConversationFab
         onStartNew={handleStartNewConversation}
         isVisible={true}
       />
 
-      {/* Options d'analyse rapide */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        {quickAnalysisOptions.map((option, index) => (
-          <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group">
-            <CardContent className="p-4">
-              <Button
-                variant="ghost"
-                className="w-full h-full p-0 flex flex-col items-center gap-3 group-hover:bg-transparent"
-                onClick={option.action}
+      {/* Main Content Layout */}
+      <div className="grid lg:grid-cols-4 gap-8">
+        {/* Central Analysis Input - Takes most space */}
+        <div className="lg:col-span-3">
+          <ConflictInput
+            key={resetKey}
+            onAnalyze={handleAnalyze}
+            onVoiceAnalyze={handleVoiceAnalyze}
+            isAnalyzing={isLoading}
+            selectedTemplate={selectedTemplate}
+          />
+        </div>
+
+        {/* Sidebar with Quick Actions */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Quick Templates */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              Quick Start
+            </h3>
+            
+            {quickTemplates.map((template, index) => (
+              <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
+                <CardContent className="p-4">
+                  <Button
+                    variant="ghost"
+                    className="w-full h-full p-0 flex flex-col items-start gap-3 group-hover:bg-transparent"
+                    onClick={() => handleTemplateSelect(template.template)}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                        {template.icon}
+                      </div>
+                    </div>
+                    <div className="text-left w-full">
+                      <h4 className="font-medium text-gray-800 text-sm mb-1">
+                        {template.title}
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        {template.description}
+                      </p>
+                    </div>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* History Button */}
+            <Card className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
+              <CardContent className="p-4">
+                <Button
+                  variant="ghost"
+                  className="w-full h-full p-0 flex flex-col items-start gap-3 group-hover:bg-transparent"
+                  onClick={() => user ? navigate('/history') : navigate('/auth')}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                      <Clock className="h-6 w-6" />
+                    </div>
+                  </div>
+                  <div className="text-left w-full">
+                    <h4 className="font-medium text-gray-800 text-sm mb-1">
+                      Recent History 📚
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      {user ? 'Review your analyses' : 'Sign in to access'}
+                    </p>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Smart Suggestions - Compact */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+            <SmartSuggestions 
+              onSelectSuggestion={(suggestion) => {
+                if (suggestion.type === 'template') {
+                  setSelectedTemplate(suggestion.content);
+                }
+              }}
+              userHistory={[]}
+            />
+          </div>
+
+          {/* Progress Motivation */}
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Heart className="h-5 w-5 text-purple-600" />
+                <Users className="h-5 w-5 text-pink-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2 text-sm">
+                Build Better Relationships
+              </h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Each analysis improves your emotional intelligence
+              </p>
+              <Button 
+                size="sm" 
+                className="w-full text-xs"
+                onClick={() => user ? navigate('/dashboard') : navigate('/auth')}
               >
-                <div className="p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
-                  {option.icon}
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-gray-800 mb-1">
-                    {option.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {option.description}
-                  </p>
-                </div>
+                {user ? 'View Progress' : 'Create Free Account'}
               </Button>
             </CardContent>
           </Card>
-        ))}
+        </div>
       </div>
 
-      {/* Suggestions intelligentes */}
-      <SmartSuggestions 
-        onSelectSuggestion={handleSuggestionSelect}
-        userHistory={[]} // TODO: récupérer depuis l'API
-      />
-
-      {/* Input principal pour les conflits */}
-      <ConflictInput
-        key={resetKey}
-        onAnalyze={handleAnalyze}
-        onVoiceAnalyze={handleVoiceAnalyze}
-        isAnalyzing={isLoading}
-        selectedTemplate={selectedTemplate}
-      />
-
-      {/* Message d'erreur */}
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p style={{ color: 'red' }} className="text-sm">
-            <strong>Erreur:</strong> {error}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-4xl mx-auto">
+          <p className="text-red-700 text-sm">
+            <strong>Error:</strong> {error}
           </p>
         </div>
       )}
 
-      {/* Modal de partage */}
+      {/* Share Modal */}
       {showShareModal && lastAnalysis && (
         <ShareExportModal
           isOpen={showShareModal}
@@ -230,37 +297,6 @@ export const EchoSimulator: React.FC = () => {
           title={lastAnalysis.title}
         />
       )}
-
-      {/* Widget de motivation en bas */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardContent className="p-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-800">
-              Développez votre intelligence émotionnelle
-            </h3>
-          </div>
-          <p className="text-sm text-gray-600 mb-3">
-            Chaque analyse vous rend plus empathique et améliore vos relations.
-          </p>
-          <div className="flex justify-center gap-2">
-            <Button 
-              size="sm" 
-              onClick={() => user ? navigate('/dashboard') : navigate('/auth')}
-            >
-              {user ? 'Voir mes progrès' : 'Créer un compte gratuit'}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowShareModal(true)}
-              disabled={!lastAnalysis}
-            >
-              Partager une analyse
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

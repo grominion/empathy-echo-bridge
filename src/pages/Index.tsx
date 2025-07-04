@@ -14,7 +14,9 @@ import {
   Shield,
   Star,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 const Index = () => {
@@ -22,163 +24,178 @@ const Index = () => {
 
   const features = [
     {
-      icon: <Brain className="h-6 w-6 text-indigo-600" />,
-      title: "Coach IA Personnel",
-      description: "Un assistant intelligent pour vous guider dans vos relations"
+      icon: <Brain className="h-8 w-8 text-indigo-600" />,
+      title: "AI Personal Coach",
+      description: "Smart assistant to guide you through your relationships"
     },
     {
-      icon: <Heart className="h-6 w-6 text-red-500" />,
-      title: "Analyse Empathique",
-      description: "Comprenez les émotions et perspectives dans vos conflits"
+      icon: <Heart className="h-8 w-8 text-red-500" />,
+      title: "Empathetic Analysis", 
+      description: "Understand emotions and perspectives in your conflicts"
     },
     {
-      icon: <TrendingUp className="h-6 w-6 text-green-600" />,
-      title: "Développement Personnel",
-      description: "Suivez vos progrès et développez votre intelligence émotionnelle"
+      icon: <TrendingUp className="h-8 w-8 text-green-600" />,
+      title: "Personal Growth",
+      description: "Track progress and develop emotional intelligence"
     },
     {
-      icon: <MessageSquare className="h-6 w-6 text-blue-600" />,
-      title: "Conversations Guidées",
-      description: "Apprenez à communiquer de manière non-violente"
+      icon: <MessageSquare className="h-8 w-8 text-blue-600" />,
+      title: "Guided Conversations",
+      description: "Learn non-violent communication techniques"
     }
   ];
 
   const benefits = [
-    "Résolution de conflits personnels et professionnels",
-    "Amélioration de vos compétences en communication",
-    "Développement de l'empathie et de l'intelligence émotionnelle",
-    "Suivi personnalisé de vos progrès",
-    "Accès à un coach IA disponible 24h/24"
+    "Resolve personal and professional conflicts",
+    "Improve your communication skills",
+    "Develop empathy and emotional intelligence", 
+    "Personalized progress tracking",
+    "24/7 AI coach access"
+  ];
+
+  const testimonials = [
+    {
+      text: "ECHO helped me understand my family conflicts and build better relationships. A revolutionary tool!",
+      author: "Sarah M.",
+      rating: 5
+    },
+    {
+      text: "The AI analysis is incredibly insightful. I've learned so much about communication.",
+      author: "James R.", 
+      rating: 5
+    }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
           <header className="text-center mb-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl mb-6 shadow-lg">
-              <span className="text-3xl font-bold text-white">E</span>
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl mb-8 shadow-2xl">
+              <span className="text-4xl font-bold text-white">E</span>
             </div>
-            <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent mb-6">
+            
+            <h1 className="text-7xl font-bold bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-700 bg-clip-text text-transparent mb-6">
               ECHO
             </h1>
-            <p className="text-2xl text-slate-600 mb-4 font-light">
-              Votre Coach Empathique IA
-            </p>
-            <p className="text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed mb-8">
-              Développez votre intelligence émotionnelle, résolvez vos conflits avec sagesse,
-              et transformez vos relations grâce à l'analyse psychologique avancée et la communication non-violente.
+            
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Sparkles className="h-6 w-6 text-yellow-500" />
+              <p className="text-3xl text-slate-700 font-light">
+                Your Empathetic AI Coach
+              </p>
+              <Sparkles className="h-6 w-6 text-yellow-500" />
+            </div>
+            
+            <p className="text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed mb-8">
+              Develop your emotional intelligence, resolve conflicts with wisdom,
+              and transform your relationships through advanced psychological analysis and non-violent communication.
             </p>
             
             {!user && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
                 <Link to="/auth">
-                  <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                    Commencer gratuitement
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-10 py-5 text-xl rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                    Start Free Now
+                    <ArrowRight className="ml-3 h-6 w-6" />
                   </Button>
                 </Link>
-                <p className="text-sm text-gray-500">
-                  <CheckCircle className="inline h-4 w-4 text-green-500 mr-1" />
-                  Gratuit • Sans engagement • Résultats immédiats
-                </p>
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Free • No commitment • Instant results</span>
+                </div>
               </div>
             )}
           </header>
 
-          {/* Demo Section */}
-          <div className="mb-16">
+          {/* Main App Demo */}
+          <div className="mb-20">
             <EchoSimulator />
-            
-            {!user && (
-              <div className="text-center mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  Vous voulez plus de fonctionnalités ?
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Créez un compte gratuit pour accéder au coach personnel, sauvegarder vos analyses et suivre vos progrès.
-                </p>
-                <Link to="/auth">
-                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
-                    Créer mon compte gratuit
-                  </Button>
-                </Link>
-              </div>
-            )}
           </div>
 
-          {/* Features Section */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
             {features.map((feature, index) => (
-              <Card key={index} className="bg-white/80 backdrop-blur-sm border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-105">
-                <CardContent className="p-6 text-center">
-                  <div className="mb-4 flex justify-center">
-                    {feature.icon}
+              <Card key={index} className="bg-white/90 backdrop-blur-sm border-gray-200 hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white">
+                <CardContent className="p-8 text-center">
+                  <div className="mb-6 flex justify-center">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl">
+                      {feature.icon}
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                  <h3 className="font-bold text-gray-800 mb-3 text-lg">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          {/* Benefits Section */}
+          {/* Benefits & Testimonials */}
           {!user && (
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200 mb-16">
-              <div className="max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-                  Pourquoi choisir ECHO ?
-                </h2>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Bénéfices concrets</h3>
-                    <ul className="space-y-3">
-                      {benefits.map((benefit, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-700">{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <Star className="h-5 w-5 text-yellow-500" />
+            <div className="grid lg:grid-cols-2 gap-12 mb-20">
+              {/* Benefits */}
+              <Card className="bg-white/90 backdrop-blur-sm border-gray-200 shadow-xl">
+                <CardContent className="p-10">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+                    <Zap className="h-8 w-8 text-yellow-500" />
+                    Why Choose ECHO?
+                  </h2>
+                  <ul className="space-y-4">
+                    {benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <CheckCircle className="h-6 w-6 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 text-lg">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* Testimonials */}
+              <Card className="bg-white/90 backdrop-blur-sm border-gray-200 shadow-xl">
+                <CardContent className="p-10">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+                    <Users className="h-8 w-8 text-blue-500" />
+                    What Users Say
+                  </h2>
+                  <div className="space-y-6">
+                    {testimonials.map((testimonial, index) => (
+                      <div key={index} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                        <div className="flex items-center gap-1 mb-3">
+                          {Array.from({ length: testimonial.rating }).map((_, i) => (
+                            <Star key={i} className="h-5 w-5 text-yellow-500 fill-current" />
+                          ))}
+                        </div>
+                        <p className="text-gray-700 italic mb-3 text-lg">
+                          "{testimonial.text}"
+                        </p>
+                        <p className="text-gray-600 font-medium">- {testimonial.author}</p>
                       </div>
-                      <p className="text-gray-700 italic mb-3">
-                        "ECHO m'a aidé à comprendre mes conflits familiaux et à développer de meilleures relations. Un outil révolutionnaire !"
-                      </p>
-                      <p className="text-sm text-gray-600 font-medium">- Marie, utilisatrice</p>
-                    </div>
+                    ))}
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* CTA Section */}
           {!user && (
-            <div className="text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl p-12 shadow-2xl">
-              <h2 className="text-4xl font-bold mb-4">
-                Prêt à transformer vos relations ?
+            <div className="text-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-3xl p-16 shadow-2xl">
+              <h2 className="text-5xl font-bold mb-6">
+                Ready to Transform Your Relationships?
               </h2>
-              <p className="text-xl mb-8 opacity-90">
-                Rejoignez des milliers d'utilisateurs qui développent leur intelligence émotionnelle avec ECHO.
+              <p className="text-2xl mb-10 opacity-90">
+                Join thousands building emotional intelligence with ECHO.
               </p>
               <Link to="/auth">
-                <Button size="lg" variant="secondary" className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  Commencer maintenant
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" variant="secondary" className="bg-white text-indigo-600 hover:bg-gray-100 px-12 py-6 text-xl rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                  Start Your Journey Now
+                  <ArrowRight className="ml-3 h-6 w-6" />
                 </Button>
               </Link>
-              <p className="mt-4 text-sm opacity-75">
-                100% gratuit • Pas de carte bancaire • Résultats instantanés
+              <p className="mt-6 text-lg opacity-75">
+                100% Free • No credit card • Instant access
               </p>
             </div>
           )}
