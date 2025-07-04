@@ -169,92 +169,78 @@ export const EchoSimulator: React.FC = () => {
       />
 
       {/* Main Content Layout */}
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Central Analysis Input - Takes most space */}
-        <div className="lg:col-span-3">
-          <ConflictInput
-            key={resetKey}
-            onAnalyze={handleAnalyze}
-            onVoiceAnalyze={handleVoiceAnalyze}
-            isAnalyzing={isLoading}
-            selectedTemplate={selectedTemplate}
-            language={language}
-            onLanguageChange={setLanguage}
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Central Analysis Input */}
+        <ConflictInput
+          key={resetKey}
+          onAnalyze={handleAnalyze}
+          onVoiceAnalyze={handleVoiceAnalyze}
+          isAnalyzing={isLoading}
+          selectedTemplate={selectedTemplate}
+          language={language}
+          onLanguageChange={setLanguage}
+        />
+
+        {/* Smart Suggestions - Full Width */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+          <SmartSuggestions 
+            onSelectSuggestion={(suggestion) => {
+              if (suggestion.type === 'template') {
+                setSelectedTemplate(suggestion.content);
+              }
+            }}
+            userHistory={[]}
           />
         </div>
 
-        {/* Sidebar with Quick Actions */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Quick Templates */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800 text-lg flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              Quick Start
-            </h3>
-            
-            {quickTemplates.map((template, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
-                <CardContent className="p-4">
-                  <Button
-                    variant="ghost"
-                    className="w-full h-full p-0 flex flex-col items-start gap-3 group-hover:bg-transparent"
-                    onClick={() => handleTemplateSelect(template.template)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                        {template.icon}
-                      </div>
-                    </div>
-                    <div className="text-left w-full">
-                      <h4 className="font-medium text-gray-800 text-sm mb-1">
-                        {template.title}
-                      </h4>
-                      <p className="text-xs text-gray-600">
-                        {template.description}
-                      </p>
-                    </div>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-
-            {/* History Button */}
-            <Card className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
+        {/* Quick Actions Row */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {quickTemplates.map((template, index) => (
+            <Card key={index} className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
               <CardContent className="p-4">
                 <Button
                   variant="ghost"
-                  className="w-full h-full p-0 flex flex-col items-start gap-3 group-hover:bg-transparent"
-                  onClick={() => user ? navigate('/history') : navigate('/auth')}
+                  className="w-full h-full p-0 flex flex-col items-center gap-3 group-hover:bg-transparent"
+                  onClick={() => handleTemplateSelect(template.template)}
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                      <Clock className="h-6 w-6" />
-                    </div>
+                  <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                    {template.icon}
                   </div>
-                  <div className="text-left w-full">
+                  <div className="text-center">
                     <h4 className="font-medium text-gray-800 text-sm mb-1">
-                      Recent History 📚
+                      {template.title}
                     </h4>
                     <p className="text-xs text-gray-600">
-                      {user ? 'Review your analyses' : 'Sign in to access'}
+                      {template.description}
                     </p>
                   </div>
                 </Button>
               </CardContent>
             </Card>
-          </div>
+          ))}
 
-          {/* Smart Suggestions - Compact */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-            <SmartSuggestions 
-              onSelectSuggestion={(suggestion) => {
-                if (suggestion.type === 'template') {
-                  setSelectedTemplate(suggestion.content);
-                }
-              }}
-              userHistory={[]}
-            />
-          </div>
+          {/* History Button */}
+          <Card className="hover:shadow-lg transition-all cursor-pointer group border-2 hover:border-blue-200">
+            <CardContent className="p-4">
+              <Button
+                variant="ghost"
+                className="w-full h-full p-0 flex flex-col items-center gap-3 group-hover:bg-transparent"
+                onClick={() => user ? navigate('/history') : navigate('/auth')}
+              >
+                <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                  <Clock className="h-6 w-6" />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-medium text-gray-800 text-sm mb-1">
+                    Recent History 📚
+                  </h4>
+                  <p className="text-xs text-gray-600">
+                    {user ? 'Review your analyses' : 'Sign in to access'}
+                  </p>
+                </div>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Progress Motivation */}
           <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">

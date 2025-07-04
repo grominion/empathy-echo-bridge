@@ -36,7 +36,7 @@ export const EmpathyAnalysis: React.FC<EmpathyAnalysisProps> = ({ analysis, onRe
             <div className="bg-slate-50 rounded-lg p-6">
               <div className="prose prose-slate max-w-none">
                 <div className="text-slate-700 whitespace-pre-wrap leading-relaxed">
-                  {analysis.otherPerspective}
+                  {analysis.empathyAnalysis || analysis.otherPerspective || 'No analysis available'}
                 </div>
               </div>
             </div>
