@@ -39,6 +39,7 @@ export const EchoSimulator: React.FC = () => {
     title: string;
   } | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [language, setLanguage] = useState('en');
   
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -177,6 +178,8 @@ export const EchoSimulator: React.FC = () => {
             onVoiceAnalyze={handleVoiceAnalyze}
             isAnalyzing={isLoading}
             selectedTemplate={selectedTemplate}
+            language={language}
+            onLanguageChange={setLanguage}
           />
         </div>
 

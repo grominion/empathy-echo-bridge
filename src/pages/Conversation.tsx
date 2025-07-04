@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const Conversation: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNewConversationFab, setShowNewConversationFab] = useState(false);
+  const [language, setLanguage] = useState('en');
   const { steps, currentStep, nextStep, reset, isComplete } = useAnalysisProgress();
 
   useEffect(() => {
@@ -326,7 +328,13 @@ const Conversation: React.FC = () => {
       )}
 
       {!hasInitialProblem ? (
-        <ConflictInput onAnalyze={handleAnalyze} onVoiceAnalyze={handleVoiceAnalyze} isAnalyzing={isAnalyzing} />
+        <ConflictInput 
+          onAnalyze={handleAnalyze} 
+          onVoiceAnalyze={handleVoiceAnalyze} 
+          isAnalyzing={isAnalyzing}
+          language={language}
+          onLanguageChange={setLanguage}
+        />
       ) : canContinue ? (
         <ContinueInput onContinue={handleContinueConversation} isAnalyzing={isAnalyzing} />
       ) : null}
