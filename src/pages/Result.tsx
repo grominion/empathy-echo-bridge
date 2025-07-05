@@ -10,6 +10,7 @@ const Result = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const analysis = location.state?.analysis as AnalysisResult;
+  const conflictDescription = location.state?.conflictDescription as string;
 
   const handleBack = () => {
     navigate('/');
@@ -47,7 +48,11 @@ const Result = () => {
             </Button>
           </div>
           
-          <EmpathyAnalysis analysis={analysis} onReset={handleBack} />
+          <EmpathyAnalysis 
+            analysis={analysis} 
+            conflictDescription={conflictDescription || 'Previous conflict'} 
+            onReset={handleBack} 
+          />
         </div>
       </div>
     </div>

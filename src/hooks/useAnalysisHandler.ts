@@ -45,7 +45,7 @@ export const useAnalysisHandler = () => {
         title: conflictText.substring(0, 50) + (conflictText.length > 50 ? '...' : '')
       });
       
-      navigate('/result', { state: { analysis: result } });
+      navigate('/result', { state: { analysis: result, conflictDescription: conflictText } });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An error occurred during analysis';
       setError(errorMessage);
@@ -81,7 +81,7 @@ export const useAnalysisHandler = () => {
         title: 'Voice Conflict Analysis'
       });
       
-      navigate('/result', { state: { analysis: result } });
+      navigate('/result', { state: { analysis: result, conflictDescription: 'Voice analysis' } });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Voice analysis failed';
       setError(errorMessage);

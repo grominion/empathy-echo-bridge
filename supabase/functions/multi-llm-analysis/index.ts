@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { conflictDescription } = await req.json()
+    const { conflictDescription, providers = ['openai', 'anthropic', 'google'] } = await req.json()
     if (!conflictDescription) {
       throw new Error("Conflict description is required.")
     }
@@ -22,52 +21,66 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Récupérer la configuration LLM active
-    const { data: activeConfig, error: configError } = await supabase
+    // Récupérer les configurations LLM pour les providers demandés
+    const { data: configs, error: configError } = await supabase
       .from('llm_configurations')
       .select('*')
-      .eq('is_active', true)
-      .single()
+      .in('provider', providers)
 
-    if (configError || !activeConfig) {
-      throw new Error("No active LLM configuration found")
+    if (configError || !configs || configs.length === 0) {
+      throw new Error("No LLM configurations found for requested providers")
     }
 
-    console.log('Using LLM config:', activeConfig.name)
+    console.log('Using LLM configs:', configs.map(c => c.name))
 
-    let analysisResult = ''
+    const analyses: Record<string, any> = {}
+    const promises = configs.map(async (config) => {
+      try {
+        let result = ''
+        switch (config.provider) {
+          case 'anthropic':
+            result = await callAnthropic(config, conflictDescription)
+            break
+          case 'openai':
+            result = await callOpenAI(config, conflictDescription)
+            break
+          case 'google':
+            result = await callGoogle(config, conflictDescription)
+            break
+          case 'xai':
+            result = await callXAI(config, conflictDescription)
+            break
+          case 'mistral':
+            result = await callMistral(config, conflictDescription)
+            break
+          case 'deepseek':
+            result = await callDeepSeek(config, conflictDescription)
+            break
+          case 'qwen':
+            result = await callQwen(config, conflictDescription)
+            break
+        }
+        analyses[config.provider] = {
+          result,
+          name: config.name,
+          provider: config.provider
+        }
+      } catch (error) {
+        console.error(`Error with ${config.provider}:`, error)
+        analyses[config.provider] = {
+          error: error.message,
+          name: config.name,
+          provider: config.provider
+        }
+      }
+    })
 
-    switch (activeConfig.provider) {
-      case 'anthropic':
-        analysisResult = await callAnthropic(activeConfig, conflictDescription)
-        break
-      case 'openai':
-        analysisResult = await callOpenAI(activeConfig, conflictDescription)
-        break
-      case 'google':
-        analysisResult = await callGoogle(activeConfig, conflictDescription)
-        break
-      case 'xai':
-        analysisResult = await callXAI(activeConfig, conflictDescription)
-        break
-      case 'mistral':
-        analysisResult = await callMistral(activeConfig, conflictDescription)
-        break
-      case 'deepseek':
-        analysisResult = await callDeepSeek(activeConfig, conflictDescription)
-        break
-      case 'qwen':
-        analysisResult = await callQwen(activeConfig, conflictDescription)
-        break
-      default:
-        throw new Error(`Unsupported provider: ${activeConfig.provider}`)
-    }
+    await Promise.all(promises)
 
     return new Response(
       JSON.stringify({ 
-        analysis: analysisResult,
-        llm_used: activeConfig.name,
-        provider: activeConfig.provider
+        analyses,
+        providers_used: configs.map(c => c.provider)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -76,10 +89,10 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Dynamic LLM call failed:', error)
+    console.error('Multi-LLM analysis failed:', error)
     return new Response(
       JSON.stringify({ 
-        error: `Dynamic LLM call failed: ${error.message}`
+        error: `Multi-LLM analysis failed: ${error.message}`
       }),
       { 
         status: 500,
