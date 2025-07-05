@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { conflictDescription, providers = ['openai', 'anthropic', 'google'] } = await req.json()
+    const { conflictDescription } = await req.json()
     if (!conflictDescription) {
       throw new Error("Conflict description is required.")
     }
@@ -21,56 +21,65 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Récupérer les configurations LLM pour les providers demandés
+    // Récupérer toutes les configurations actives par catégorie
     const { data: configs, error: configError } = await supabase
       .from('llm_configurations')
       .select('*')
-      .in('provider', providers)
+      .eq('is_active', true)
+      .order('priority_order', { ascending: true })
 
     if (configError || !configs || configs.length === 0) {
-      throw new Error("No LLM configurations found for requested providers")
+      throw new Error("No active LLM configurations found")
     }
 
-    console.log('Using LLM configs:', configs.map(c => c.name))
+    console.log('Using LLM configs:', configs.map(c => `${c.name} (${c.category})`))
 
     const analyses: Record<string, any> = {}
     const promises = configs.map(async (config) => {
       try {
         let result = ''
+        const prompt = `${config.system_prompt}
+
+Analyze this conflict: ${conflictDescription}`
+
         switch (config.provider) {
           case 'anthropic':
-            result = await callAnthropic(config, conflictDescription)
+            result = await callAnthropic(config, prompt)
             break
           case 'openai':
-            result = await callOpenAI(config, conflictDescription)
+            result = await callOpenAI(config, prompt)
             break
           case 'google':
-            result = await callGoogle(config, conflictDescription)
+            result = await callGoogle(config, prompt)
             break
           case 'xai':
-            result = await callXAI(config, conflictDescription)
+            result = await callXAI(config, prompt)
             break
           case 'mistral':
-            result = await callMistral(config, conflictDescription)
+            result = await callMistral(config, prompt)
             break
           case 'deepseek':
-            result = await callDeepSeek(config, conflictDescription)
+            result = await callDeepSeek(config, prompt)
             break
           case 'qwen':
-            result = await callQwen(config, conflictDescription)
+            result = await callQwen(config, prompt)
             break
         }
-        analyses[config.provider] = {
+        
+        analyses[config.category || config.provider] = {
           result,
           name: config.name,
-          provider: config.provider
+          provider: config.provider,
+          category: config.category,
+          description: config.description
         }
       } catch (error) {
-        console.error(`Error with ${config.provider}:`, error)
-        analyses[config.provider] = {
+        console.error(`Error with ${config.name}:`, error)
+        analyses[config.category || config.provider] = {
           error: error.message,
           name: config.name,
-          provider: config.provider
+          provider: config.provider,
+          category: config.category
         }
       }
     })
@@ -80,7 +89,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         analyses,
-        providers_used: configs.map(c => c.provider)
+        configs_used: configs.map(c => ({ name: c.name, category: c.category }))
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,7 +111,7 @@ serve(async (req) => {
   }
 })
 
-async function callAnthropic(config: any, conflictDescription: string) {
+async function callAnthropic(config: any, prompt: string) {
   const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!anthropicApiKey) throw new Error('ANTHROPIC_API_KEY not found')
 
@@ -119,9 +128,7 @@ async function callAnthropic(config: any, conflictDescription: string) {
       messages: [
         {
           role: 'user',
-          content: `${config.system_prompt}
-
-Analyze this conflict: ${conflictDescription}`
+          content: prompt
         }
       ]
     })
@@ -135,7 +142,7 @@ Analyze this conflict: ${conflictDescription}`
   return data.content[0].text
 }
 
-async function callOpenAI(config: any, conflictDescription: string) {
+async function callOpenAI(config: any, prompt: string) {
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
   if (!openaiApiKey) throw new Error('OPENAI_API_KEY not found')
 
@@ -156,7 +163,7 @@ async function callOpenAI(config: any, conflictDescription: string) {
         },
         {
           role: 'user',
-          content: `Analyze this conflict: ${conflictDescription}`
+          content: prompt
         }
       ]
     })
@@ -170,7 +177,7 @@ async function callOpenAI(config: any, conflictDescription: string) {
   return data.choices[0].message.content
 }
 
-async function callGoogle(config: any, conflictDescription: string) {
+async function callGoogle(config: any, prompt: string) {
   const googleApiKey = Deno.env.get('GOOGLE_API_KEY')
   if (!googleApiKey) throw new Error('GOOGLE_API_KEY not found')
 
@@ -182,9 +189,7 @@ async function callGoogle(config: any, conflictDescription: string) {
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `${config.system_prompt}
-
-Analyze this conflict: ${conflictDescription}`
+          text: prompt
         }]
       }],
       generationConfig: {
@@ -202,7 +207,7 @@ Analyze this conflict: ${conflictDescription}`
   return data.candidates[0].content.parts[0].text
 }
 
-async function callXAI(config: any, conflictDescription: string) {
+async function callXAI(config: any, prompt: string) {
   const xaiApiKey = Deno.env.get('XAI_API_KEY')
   if (!xaiApiKey) throw new Error('XAI_API_KEY not found')
 
@@ -223,7 +228,7 @@ async function callXAI(config: any, conflictDescription: string) {
         },
         {
           role: 'user',
-          content: `Analyze this conflict: ${conflictDescription}`
+          content: prompt
         }
       ]
     })
@@ -237,7 +242,7 @@ async function callXAI(config: any, conflictDescription: string) {
   return data.choices[0].message.content
 }
 
-async function callMistral(config: any, conflictDescription: string) {
+async function callMistral(config: any, prompt: string) {
   const mistralApiKey = Deno.env.get('MISTRAL_API_KEY')
   if (!mistralApiKey) throw new Error('MISTRAL_API_KEY not found')
 
@@ -258,7 +263,7 @@ async function callMistral(config: any, conflictDescription: string) {
         },
         {
           role: 'user',
-          content: `Analyze this conflict: ${conflictDescription}`
+          content: prompt
         }
       ]
     })
@@ -272,7 +277,7 @@ async function callMistral(config: any, conflictDescription: string) {
   return data.choices[0].message.content
 }
 
-async function callDeepSeek(config: any, conflictDescription: string) {
+async function callDeepSeek(config: any, prompt: string) {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
   if (!deepseekApiKey) throw new Error('DEEPSEEK_API_KEY not found')
 
@@ -293,7 +298,7 @@ async function callDeepSeek(config: any, conflictDescription: string) {
         },
         {
           role: 'user',
-          content: `Analyze this conflict: ${conflictDescription}`
+          content: prompt
         }
       ]
     })
@@ -307,7 +312,7 @@ async function callDeepSeek(config: any, conflictDescription: string) {
   return data.choices[0].message.content
 }
 
-async function callQwen(config: any, conflictDescription: string) {
+async function callQwen(config: any, prompt: string) {
   const qwenApiKey = Deno.env.get('QWEN_API_KEY')
   if (!qwenApiKey) throw new Error('QWEN_API_KEY not found')
 
@@ -331,7 +336,7 @@ async function callQwen(config: any, conflictDescription: string) {
           },
           {
             role: 'user',
-            content: `Analyze this conflict: ${conflictDescription}`
+            content: prompt
           }
         ]
       }

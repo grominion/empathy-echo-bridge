@@ -13,6 +13,11 @@ interface LLMConfig {
   max_tokens: number;
   temperature: number;
   system_prompt: string;
+  category?: string;
+  description?: string;
+  cost_per_token?: number;
+  priority_order?: number;
+  api_request_template?: any;
 }
 
 export const useLLMConfigs = () => {
@@ -29,7 +34,7 @@ export const useLLMConfigs = () => {
       const { data, error } = await supabase
         .from('llm_configurations')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('priority_order', { ascending: true });
 
       if (error) throw error;
       setConfigs(data || []);
@@ -63,10 +68,15 @@ export const useLLMConfigs = () => {
         provider: configData.provider,
         model: configData.model,
         api_endpoint: configData.api_endpoint,
-        max_tokens: configData.max_tokens || 2048,
+        max_tokens: configData.max_tokens || 4096,
         temperature: configData.temperature || 0.7,
         system_prompt: configData.system_prompt || '',
-        is_active: configData.is_active || false
+        is_active: configData.is_active || false,
+        category: configData.category || 'strategy',
+        description: configData.description || '',
+        cost_per_token: configData.cost_per_token || 0.0,
+        priority_order: configData.priority_order || 0,
+        api_request_template: configData.api_request_template || {}
       };
 
       if (configData.id) {
@@ -84,7 +94,7 @@ export const useLLMConfigs = () => {
 
       toast({
         title: "Succès",
-        description: "Configuration LLM sauvegardée"
+        description: "Configuration LLM sauvegardée avec succès"
       });
       
       await fetchConfigs();
@@ -105,11 +115,16 @@ export const useLLMConfigs = () => {
 
   const toggleActiveConfig = async (id: string, isActive: boolean) => {
     try {
+      // Si on active cette config, désactiver les autres de la même catégorie
       if (isActive) {
-        await supabase
-          .from('llm_configurations')
-          .update({ is_active: false })
-          .neq('id', id);
+        const currentConfig = configs.find(c => c.id === id);
+        if (currentConfig?.category) {
+          await supabase
+            .from('llm_configurations')
+            .update({ is_active: false })
+            .eq('category', currentConfig.category)
+            .neq('id', id);
+        }
       }
 
       const { error } = await supabase
@@ -118,6 +133,12 @@ export const useLLMConfigs = () => {
         .eq('id', id);
 
       if (error) throw error;
+      
+      toast({
+        title: "Succès",
+        description: `Configuration ${isActive ? 'activée' : 'désactivée'}`
+      });
+      
       await fetchConfigs();
     } catch (err) {
       toast({
@@ -129,6 +150,10 @@ export const useLLMConfigs = () => {
   };
 
   const deleteConfig = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette configuration ?')) {
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('llm_configurations')
@@ -138,7 +163,7 @@ export const useLLMConfigs = () => {
       if (error) throw error;
       toast({
         title: "Succès",
-        description: "Configuration supprimée"
+        description: "Configuration supprimée avec succès"
       });
       await fetchConfigs();
     } catch (err) {
